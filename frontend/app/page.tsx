@@ -1,13 +1,27 @@
-// This content is from the new chat-interface-design theme, adapted for Lelwa LLM for Real Estate S.
 "use client"
 
 import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Check, Clock, Loader2, Send, User, Ship, Search as SearchIcon } from "lucide-react" // Renamed Search to SearchIcon to avoid conflict
+import {
+  Activity,
+  ArrowUpRight,
+  Check,
+  CircleDot,
+  Clock,
+  Layers,
+  Loader2,
+  MapPin,
+  Send,
+  Shield,
+  Sparkles,
+  TrendingUp,
+  User,
+} from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 interface RequiredField {
   id: string
@@ -24,8 +38,54 @@ interface Message {
   timestamp: Date
 }
 
+const signalPillars: { title: string; description: string; icon: LucideIcon }[] = [
+  {
+    title: "Signal Radar",
+    description: "Detect demand swings, launch velocity, and yield pressure in real time.",
+    icon: Activity,
+  },
+  {
+    title: "Deal DNA",
+    description: "Break down every project into risk bands, price reality, and exit liquidity.",
+    icon: Layers,
+  },
+  {
+    title: "Risk Shield",
+    description: "Filter portfolios by safety bands before you ever book a viewing.",
+    icon: Shield,
+  },
+]
+
+const pulseStats = [
+  {
+    label: "Listings scored",
+    value: "7.2k",
+    detail: "Neon-ranked inventory",
+  },
+  {
+    label: "Avg gross yield",
+    value: "6.4%",
+    detail: "Prime Dubai 2025",
+  },
+  {
+    label: "Risk bands",
+    value: "5",
+    detail: "Institutional to speculative",
+  },
+  {
+    label: "Signals tracked",
+    value: "24",
+    detail: "Demand, supply, timing",
+  },
+]
+
+const momentumAreas = [
+  { name: "Dubai Marina", score: "92", trend: "+4.1%" },
+  { name: "Business Bay", score: "89", trend: "+3.3%" },
+  { name: "JVC", score: "86", trend: "+2.7%" },
+]
+
 export default function DashboardPage() {
-  // Existing state from LogisticsQuoteInterface
   const [input, setInput] = useState("")
   const [isSending, setIsSending] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -33,17 +93,16 @@ export default function DashboardPage() {
     {
       id: "1",
       role: "assistant",
-      content:
-        "Welcome to Lelwa LLM! I'm here to help you with your real estate inquiries. What are you looking for today?",
-      timestamp: new Date(Date.now() - 300000),
+      content: "Welcome to Lelwa. Share your budget, target area, and timeline to begin.",
+      timestamp: new Date(Date.now() - 180000),
     },
     {
       id: "2",
       role: "user",
-      content: "Hi! I need to find properties in Dubai.",
-      timestamp: new Date(Date.now() - 240000),
+      content: "Looking for a 2 bed in Dubai Marina under AED 2.5M.",
+      timestamp: new Date(Date.now() - 120000),
     },
-  ]);
+  ])
 
   const [requiredFields, setRequiredFields] = useState<RequiredField[]>([
     {
@@ -51,37 +110,37 @@ export default function DashboardPage() {
       label: "Location",
       status: "checked",
       description: "Dubai, UAE",
-      category: "Property Search",
+      category: "Search Profile",
     },
     {
       id: "property_type",
       label: "Property Type",
       status: "pending",
-      description: "Apartment, Villa, etc.",
-      category: "Property Search",
+      description: "Apartment, Villa, Townhouse",
+      category: "Search Profile",
     },
     {
       id: "budget",
       label: "Budget",
       status: "pending",
       description: "Max price range",
-      category: "Property Search",
+      category: "Search Profile",
     },
     {
       id: "bedrooms",
       label: "Bedrooms",
       status: "pending",
       description: "Number of bedrooms",
-      category: "Property Features",
+      category: "Lifestyle",
     },
     {
       id: "amenities",
       label: "Amenities",
       status: "pending",
-      description: "Pool, Gym, Parking, etc.",
-      category: "Property Features",
+      description: "Pool, Gym, Parking",
+      category: "Lifestyle",
     },
-  ]);
+  ])
 
   useEffect(() => {
     const storedId = window.localStorage.getItem("lelwa_session_id")
@@ -94,34 +153,31 @@ export default function DashboardPage() {
     setSessionId(newId)
   }, [])
 
-  // Function to update requirements based on message content
   const updateRequirements = (content: string) => {
-    setRequiredFields((prevFields) => {
-      const newFields = [...prevFields]
-      const lowerContent = content.toLowerCase()
+    const lowerContent = content.toLowerCase()
+    const keywordMap: Record<string, string[]> = {
+      property_type: ["apartment", "villa", "townhouse", "penthouse", "studio"],
+      budget: ["budget", "price", "aed", "dirham", "usd", "$", "million", "m"],
+      bedrooms: ["bedroom", "bed", "br"],
+      amenities: ["pool", "gym", "parking", "balcony", "view"],
+    }
 
-      const checkAndUpdate = (fieldId: string, keywords: string[]) => {
-        const field = newFields.find((f) => f.id === fieldId)
-        if (field && field.status === "pending") {
-          if (keywords.some((keyword) => lowerContent.includes(keyword))) {
-            field.status = "checked"
-          }
+    setRequiredFields((prevFields) =>
+      prevFields.map((field) => {
+        if (field.status === "checked") return field
+        const keywords = keywordMap[field.id]
+        if (keywords && keywords.some((keyword) => lowerContent.includes(keyword))) {
+          return { ...field, status: "checked" }
         }
-      }
-
-      checkAndUpdate("property_type", ["apartment", "villa", "townhouse"])
-      checkAndUpdate("budget", ["budget", "price", "aed", "dirham", "usd", "$", "million"])
-      checkAndUpdate("bedrooms", ["bedroom", "bed", "br"])
-      checkAndUpdate("amenities", ["pool", "gym", "parking", "balcony"])
-      
-      return newFields
-    })
+        return field
+      })
+    )
   }
 
-  // Effect to process messages and update requirements
   useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1]
+    if (messages.length === 0) return
+    const lastMessage = messages[messages.length - 1]
+    if (lastMessage.role === "user") {
       updateRequirements(lastMessage.content)
     }
   }, [messages])
@@ -166,7 +222,7 @@ export default function DashboardPage() {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.reply || "I couldn't generate a response just now.",
+        content: data.reply || "I could not generate a response just now.",
         timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
       }
       setMessages((prev) => [...prev, aiResponse])
@@ -174,7 +230,7 @@ export default function DashboardPage() {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Sorry, I couldn't reach the Lelwa API. Please check the backend and try again.",
+        content: "Sorry, I could not reach the Lelwa API. Please check the backend and try again.",
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, aiResponse])
@@ -185,7 +241,7 @@ export default function DashboardPage() {
 
   const completedCount = requiredFields.filter((field) => field.status === "checked").length
   const totalCount = requiredFields.length
-  const progressPercentage = (completedCount / totalCount) * 100
+  const progressPercentage = Math.round((completedCount / totalCount) * 100)
 
   const fieldsByCategory = requiredFields.reduce(
     (acc, field) => {
@@ -199,97 +255,232 @@ export default function DashboardPage() {
   )
 
   return (
-    <div className="relative min-h-screen p-8">
-      {/* Hero Headline */}
-      <div className="relative z-10 text-center mb-16 pt-16">
-        <h1 className="text-5xl md:text-7xl font-bold text-foreground drop-shadow-lg leading-tight">
-          Find Your <span className="text-primary">Dream Property</span> with AI.
-        </h1>
-        <p className="text-lg text-muted-foreground mt-4 max-w-2xl mx-auto opacity-80">
-          Leveraging cutting-edge AI for effortless real estate discovery.
-        </p>
+    <div className="relative min-h-screen overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-24 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,_rgba(16,117,107,0.28),_transparent_65%)] blur-3xl" />
+        <div className="absolute -bottom-28 right-[-120px] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_top,_rgba(213,123,54,0.25),_transparent_70%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(120deg,_rgba(15,23,42,0.04),_rgba(15,23,42,0))]" />
       </div>
 
-      {/* Floating Search Input */}
-      <Card className="relative z-20 mx-auto max-w-2xl p-2 rounded-full shadow-xl bg-card/60 backdrop-blur-lg mb-16">
-        <CardContent className="flex items-center space-x-2 px-4 py-2 !p-2">
-          <SearchIcon className="w-5 h-5 text-muted-foreground" />
-          <Input
-            className="flex-1 bg-transparent border-none focus-visible:ring-0 text-foreground placeholder:text-muted-foreground focus:shadow-lg focus:shadow-primary/30 outline-none"
-            placeholder="Search for properties, trends, or insights..."
-          />
-          <Button size="icon" className="shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
-            <SearchIcon className="w-5 h-5" />
+      <header className="relative z-10 flex items-center justify-between px-6 md:px-12 pt-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Lelwa</p>
+            <p className="font-display text-lg text-foreground">Real Estate Intelligence</p>
+          </div>
+        </div>
+        <div className="hidden md:flex items-center gap-3">
+          <Button variant="outline" className="rounded-full">
+            Book demo
           </Button>
-        </CardContent>
-      </Card>
+          <Button className="rounded-full">
+            Get a briefing
+            <ArrowUpRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </header>
 
-
-      <div className="flex justify-center items-start gap-8 z-20 relative">
-        {/* Main Content Area (LogisticsQuoteInterface adapted) */}
-        <Card className="flex-1 max-w-4xl p-0 rounded-xl bg-card/60 backdrop-blur-lg shadow-xl relative overflow-hidden">
-          {/* Chat Interface - Left Side */}
-          <div className="flex-1 flex flex-col h-[70vh]">
-            {/* Chat Header */}
-            <div className="bg-card/70 border-b border-border/50 p-4 backdrop-blur-sm sticky top-0 z-10">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                  <Ship className="w-4 h-4 text-primary-foreground" /> {/* Changed icon and colors */}
-                </div>
-                <div>
-                  <h1 className="text-lg font-semibold text-foreground">Lelwa Real Estate AI</h1>
-                  <p className="text-sm text-muted-foreground">AI Assistant • Find your next property</p>
-                </div>
-              </div>
+      <main className="relative z-10 px-6 md:px-12 pb-20 pt-10 space-y-16">
+        <section className="grid gap-10 lg:grid-cols-[1.2fr_1fr] items-center">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="bg-background/60 text-muted-foreground">
+                Dubai and UAE coverage
+              </Badge>
+              <Badge className="bg-primary/90 text-primary-foreground">
+                Live signal stack
+              </Badge>
             </div>
+            <h1 className="font-display text-4xl md:text-6xl leading-tight text-foreground">
+              Real estate intelligence that moves before the market does.
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-xl">
+              Lelwa blends live market signals, risk bands, and investor fit scoring into one command
+              center for Dubai property decisions.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button className="rounded-full" onClick={() => document.getElementById("studio")?.scrollIntoView({ behavior: "smooth" })}>
+                Enter live studio
+              </Button>
+              <Button variant="outline" className="rounded-full">
+                View signal map
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-6 pt-4">
+              {pulseStats.slice(0, 3).map((stat) => (
+                <div key={stat.label} className="min-w-[140px]">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{stat.label}</p>
+                  <p className="text-2xl font-semibold text-foreground">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.detail}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+              {[
+                "DLD transactions",
+                "Price reality",
+                "Yield pressure",
+                "Launch velocity",
+              ].map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-full border border-border/60 bg-background/70 px-3 py-1"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+          </div>
 
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-6">
-              <div className="space-y-6 max-w-4xl mx-auto">
-                {messages.map((message) => (
-                  <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div
-                      className={`flex items-start space-x-3 max-w-[85%] ${message.role === "user" ? "flex-row-reverse space-x-reverse" : ""}`}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          message.role === "user" ? "bg-primary text-primary-foreground" : "bg-gradient-to-r from-primary to-secondary text-primary-foreground"
-                        }`}
-                      >
-                        {message.role === "user" ? <User className="w-4 h-4" /> : <Ship className="w-4 h-4 text-primary-foreground" />}
-                      </div>
-                      <div className="flex flex-col space-y-1">
-                        <div
-                          className={`rounded-2xl px-4 py-3 ${
-                            message.role === "user"
-                              ? "bg-primary text-primary-foreground ml-auto"
-                              : "bg-card/70 text-foreground border border-border/50"
-                          }`}
-                        >
-                          <p className="text-sm leading-relaxed">{message.content}</p>
-                        </div>
-                        <p
-                          className={`text-xs px-2 ${message.role === "user" ? "text-right text-muted-foreground" : "text-muted-foreground"}`}
-                        >
-                          {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </p>
-                      </div>
-                    </div>
+          <div className="space-y-4">
+            <Card className="bg-card/80 border-border/60 shadow-2xl shadow-primary/10">
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    <CircleDot className="h-3 w-3 text-emerald-500" />
+                    Live market pulse
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                  <Badge variant="outline" className="bg-background/70">
+                    Updated 2 min ago
+                  </Badge>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {pulseStats.map((stat) => (
+                    <div key={stat.label} className="rounded-2xl border border-border/60 bg-background/70 p-4">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{stat.label}</p>
+                      <p className="text-2xl font-semibold text-foreground mt-2">{stat.value}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{stat.detail}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-background/70 p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">Momentum leaders</p>
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {momentumAreas.map((area) => (
+                      <div key={area.name} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-foreground">{area.name}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-muted-foreground">{area.score}</span>
+                          <span className="text-primary font-medium">{area.trend}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* Input Area */}
-            <div className="bg-card/70 border-t border-border/50 p-4 backdrop-blur-sm sticky bottom-0 z-10">
-              <div className="max-w-4xl mx-auto">
-                <div className="flex space-x-3">
-                  <div className="flex-1 relative">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card className="bg-card/70 border-border/60">
+                <CardContent className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Coverage</p>
+                  <p className="text-2xl font-semibold text-foreground">34 areas</p>
+                  <p className="text-xs text-muted-foreground">Ranked by risk and yield</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/70 border-border/60">
+                <CardContent className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Investor fit</p>
+                  <p className="text-2xl font-semibold text-foreground">92%</p>
+                  <p className="text-xs text-muted-foreground">Avg match confidence</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-6 md:grid-cols-3">
+          {signalPillars.map((pillar, index) => {
+            const Icon = pillar.icon
+            return (
+              <Card
+                key={pillar.title}
+                className={`bg-card/70 border-border/60 animate-in fade-in slide-in-from-bottom-6 duration-700 ${
+                  index === 0 ? "delay-100" : index === 1 ? "delay-200" : "delay-300"
+                }`}
+              >
+                <CardContent className="space-y-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent/70 text-primary">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">{pillar.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{pillar.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </section>
+
+        <section id="studio" className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+          <Card className="bg-card/80 border-border/60">
+            <CardContent className="p-0">
+              <div className="flex items-center justify-between border-b border-border/60 p-6">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Live intelligence studio</p>
+                  <h2 className="text-xl font-semibold text-foreground">Talk to the market engine</h2>
+                </div>
+                <Badge variant="outline" className="bg-background/70">
+                  Avg response 2.3s
+                </Badge>
+              </div>
+
+              <div className="flex flex-col h-[55vh] min-h-[420px]">
+                <ScrollArea className="flex-1 px-6 py-6">
+                  <div className="space-y-6">
+                    {messages.map((message) => (
+                      <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                        <div
+                          className={`flex items-start space-x-3 max-w-[85%] ${message.role === "user" ? "flex-row-reverse space-x-reverse" : ""}`}
+                        >
+                          <div
+                            className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              message.role === "user" ? "bg-primary text-primary-foreground" : "bg-accent text-primary"
+                            }`}
+                          >
+                            {message.role === "user" ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                          </div>
+                          <div className="flex flex-col space-y-1">
+                            <div
+                              className={`rounded-2xl px-4 py-3 ${
+                                message.role === "user"
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-background/70 text-foreground border border-border/60"
+                              }`}
+                            >
+                              <p className="text-sm leading-relaxed">{message.content}</p>
+                            </div>
+                            <p
+                              className={`text-xs px-2 ${
+                                message.role === "user" ? "text-right text-muted-foreground" : "text-muted-foreground"
+                              }`}
+                            >
+                              {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+
+                <div className="border-t border-border/60 p-4">
+                  <div className="relative">
                     <Input
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder="Ask about properties, market trends, or investments..."
-                      className="bg-input/60 border-border/50 text-foreground placeholder:text-muted-foreground pr-12 py-3 rounded-full focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Ask about yield, pricing, or where to buy next..."
+                      className="bg-background/70 border-border/60 text-foreground placeholder:text-muted-foreground pr-12 py-3 rounded-full focus:ring-2 focus:ring-primary focus:border-transparent"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault()
@@ -301,7 +492,7 @@ export default function DashboardPage() {
                     <Button
                       onClick={handleSend}
                       size="sm"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-8 w-8 p-0"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full h-8 w-8 p-0"
                       disabled={isSending || !input.trim()}
                     >
                       {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -309,113 +500,116 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Required Fields Sidebar - Right Side (Adapted for Glassmorphism) */}
-        <Card className="w-96 p-0 rounded-xl bg-card/60 backdrop-blur-lg shadow-xl relative overflow-hidden">
-          {/* Sidebar Header */}
-          <div className="p-6 border-b border-border/50 bg-card/70">
-            <h2 className="text-lg font-semibold text-foreground mb-3">Real Estate Requirements</h2>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Progress</span>
-                <span className="text-foreground font-medium">
-                  {completedCount}/{totalCount}
-                </span>
+          <Card className="bg-card/80 border-border/60">
+            <CardContent className="p-6 space-y-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Investor intake</p>
+                <h3 className="text-lg font-semibold text-foreground">Signal completeness</h3>
+                <p className="text-sm text-muted-foreground mt-1">Fill the gaps to unlock your shortlist.</p>
               </div>
-              <div className="w-full bg-border/50 rounded-full h-2">
-                <div
-                  className="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${progressPercentage}%` }}
-                />
-              </div>
-            </div>
-          </div>
 
-          {/* Fields List */}
-          <ScrollArea className="flex-1 p-4 h-[50vh]">
-            <div className="space-y-6">
-              {Object.entries(fieldsByCategory).map(([category, fields]) => (
-                <div key={category}>
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">{category}</h3>
-                  <div className="space-y-2">
-                    {fields.map((field) => (
-                      <Card
-                        key={field.id}
-                        className={`transition-all duration-200 border border-border/30 p-3 rounded-lg ${
-                          field.status === "checked"
-                            ? "bg-primary/20 hover:bg-primary/30"
-                            : "bg-input/20 hover:bg-input/30"
-                        }`}
-                      >
-                        <CardContent className="!p-0">
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Progress</span>
+                  <span className="text-foreground font-medium">
+                    {completedCount}/{totalCount}
+                  </span>
+                </div>
+                <div className="w-full bg-border/50 rounded-full h-2">
+                  <div
+                    className="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${progressPercentage}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {Object.entries(fieldsByCategory).map(([category, fields]) => (
+                  <div key={category}>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                      {category}
+                    </h4>
+                    <div className="space-y-2">
+                      {fields.map((field) => (
+                        <div
+                          key={field.id}
+                          className={`rounded-2xl border border-border/40 p-3 transition-all ${
+                            field.status === "checked"
+                              ? "bg-primary/15"
+                              : "bg-background/60"
+                          }`}
+                        >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center space-x-3">
                                 <div
-                                  className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center ${
                                     field.status === "checked" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                                   }`}
                                 >
                                   {field.status === "checked" ? (
-                                    <Check className="w-2.5 h-2.5" />
+                                    <Check className="w-3 h-3" />
                                   ) : (
-                                    <Clock className="w-2.5 h-2.5" />
+                                    <Clock className="w-3 h-3" />
                                   )}
                                 </div>
-                                <h4 className="font-medium text-sm text-foreground">{field.label}</h4>
+                                <h5 className="font-medium text-sm text-foreground">{field.label}</h5>
                               </div>
                               {field.description && (
-                                <p className="text-xs text-muted-foreground mt-1 ml-7">{field.description}</p>
+                                <p className="text-xs text-muted-foreground mt-1 ml-8">{field.description}</p>
                               )}
                             </div>
                             <Badge
                               variant="secondary"
                               className={`text-xs ml-2 ${
                                 field.status === "checked"
-                                  ? "bg-primary/30 text-primary-foreground border-primary/20"
+                                  ? "bg-primary/20 text-primary-foreground border-primary/20"
                                   : "bg-muted/30 text-muted-foreground border-border/20"
                               }`}
                             >
-                              {field.status === "checked" ? "✓" : "○"}
+                              {field.status === "checked" ? "Ready" : "Pending"}
                             </Badge>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
+                ))}
+              </div>
 
-          {/* Sidebar Footer */}
-          <div className="p-4 border-t border-border/50 bg-card/70">
-            <Button
-              className={`w-full transition-all duration-200 ${
-                completedCount === totalCount
-                  ? "bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 border border-border/50"
-              }`}
-              disabled={completedCount < totalCount}
-            >
-              {completedCount === totalCount ? (
-                <div className="flex items-center space-x-2">
-                  <SearchIcon className="w-4 h-4" /> {/* Changed icon */}
-                  <span>Search Properties</span>
-                </div>
-              ) : (
-                `${totalCount - completedCount} details needed`
-              )}
+              <Button
+                className={`w-full rounded-full ${
+                  completedCount === totalCount
+                    ? "bg-gradient-to-r from-primary to-secondary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+                disabled={completedCount < totalCount}
+              >
+                {completedCount === totalCount ? "Generate shortlist" : `${totalCount - completedCount} details needed`}
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="rounded-3xl border border-border/60 bg-card/70 p-8 md:p-12 backdrop-blur-lg">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ready to move?</p>
+              <h3 className="font-display text-3xl text-foreground mt-2">Book a market briefing built for your portfolio.</h3>
+              <p className="text-sm text-muted-foreground mt-3 max-w-xl">
+                Lelwa merges DLD data, developer performance, and live demand signals into a single plan for your next move.
+              </p>
+            </div>
+            <Button className="rounded-full">
+              Request briefing
+              <ArrowUpRight className="h-4 w-4" />
             </Button>
-            {completedCount === totalCount && (
-              <p className="text-xs text-muted-foreground text-center mt-2">Click to find your perfect property!</p>
-            )}
           </div>
-        </Card>
-      </div>
+        </section>
+      </main>
     </div>
   )
 }
