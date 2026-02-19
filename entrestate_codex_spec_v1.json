@@ -1,0 +1,1034 @@
+{
+  "version": "2.0.0",
+  "generated": "2026-02-11T17:03:36.329519",
+  "platform": "Entrestate Intelligence Engine",
+  "description": "Lelwa + Mashroi: Dual-platform real estate intelligence ecosystem for Dubai/UAE",
+  "architecture": {
+    "dual_platform": {
+      "lelwa.com": "Investor-facing intelligence. FREE. Character: Lelwa (The Pearl)",
+      "mashroi.com": "Broker/developer backend. PAID. Auth, data, monetization"
+    },
+    "layers": [
+      "Layer 1: LLM extracts intent -> structured tool call parameters",
+      "Layer 2: Deterministic Neon spine executes (never bypassed)",
+      "Layer 3: LLM narrates results using reason_codes + risk_flags"
+    ],
+    "llm_providers": {
+      "primary": {
+        "model": "gemini-2.0-flash",
+        "provider": "google"
+      },
+      "fallback": {
+        "model": "gpt-4o-mini",
+        "provider": "openai"
+      }
+    },
+    "database": "Neon PostgreSQL (27 tables)",
+    "languages": [
+      "en",
+      "ar",
+      "ru"
+    ],
+    "delivery": [
+      "WhatsApp (Twilio LIVE)",
+      "Voice (Polly Generative)",
+      "PDF",
+      "HTML visuals",
+      "3D viewing"
+    ],
+    "character": "Lelwa \u2014 warm, honest, Dubai life expert. Not a chatbot, a friend who knows everything."
+  },
+  "tools": {
+    "total": 20,
+    "categories": {
+      "discovery": {
+        "tools": [
+          "search_properties",
+          "get_area_intelligence",
+          "get_market_overview",
+          "explain_location",
+          "get_project_price_reality",
+          "get_market_regime"
+        ],
+        "description": "Find and explore properties, areas, maps, 3D"
+      },
+      "analysis": {
+        "tools": [
+          "analyze_investment",
+          "calculate_mortgage",
+          "compare_properties",
+          "get_interior_design_advisory"
+        ],
+        "description": "Deep financial and comparative analysis"
+      },
+      "documents": {
+        "tools": [
+          "generate_offer",
+          "generate_rental_contract",
+          "generate_negotiation_plan",
+          "generate_document_pdf"
+        ],
+        "description": "Generate branded documents and PDFs"
+      },
+      "planning": {
+        "tools": [
+          "plan_investment_portfolio",
+          "generate_viewing_plan",
+          "explore_tokenized_assets",
+          "update_token_status"
+        ],
+        "description": "Portfolio optimization and logistics"
+      },
+      "delivery": {
+        "tools": [
+          "send_whatsapp",
+          "call_investor"
+        ],
+        "description": "WhatsApp messages, PDFs, voice calls via Twilio"
+      },
+      "crm": {
+        "tools": [
+          "qualify_lead",
+          "update_investor_profile"
+        ],
+        "description": "Lead management and profile persistence"
+      },
+      "visual": {
+        "tools": [
+          "generate_property_visual"
+        ],
+        "description": "Canva-style HTML property cards with maps"
+      }
+    },
+    "definitions": [
+      {
+        "type": "function",
+        "function": {
+          "name": "search_properties",
+          "description": "Search for properties based on investor profile. Returns ranked results with scores, safety bands, and risk analysis.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "risk_profile": {
+                "type": "string",
+                "enum": [
+                  "Conservative",
+                  "Balanced",
+                  "Aggressive"
+                ]
+              },
+              "horizon": {
+                "type": "string",
+                "enum": [
+                  "Ready",
+                  "6-12mo",
+                  "1-2yr",
+                  "2-4yr",
+                  "4yr+"
+                ]
+              },
+              "budget_aed": {
+                "type": "number",
+                "description": "Budget in AED"
+              },
+              "preferred_area": {
+                "type": "string"
+              },
+              "beds_pref": {
+                "type": "string"
+              },
+              "intent": {
+                "type": "string",
+                "enum": [
+                  "invest",
+                  "live",
+                  "rent"
+                ]
+              },
+              "limit": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "risk_profile",
+              "horizon"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "update_token_status",
+          "description": "Updates the regulatory status of a tokenized asset on the Mashroi platform (e.g., to 'VARA_APPROVED').",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "token_id": {
+                "type": "string",
+                "description": "The unique ID of the tokenized asset."
+              },
+              "status": {
+                "type": "string",
+                "description": "The new regulatory status (e.g., 'VARA_APPROVED', 'PENDING', 'REJECTED')."
+              }
+            },
+            "required": [
+              "token_id",
+              "status"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "get_interior_design_advisory",
+          "description": "Generates interior design recommendations and cost estimates based on unit type, size, and investment purpose (Live/Invest/Rent).",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "unit_type": { "type": "string", "description": "e.g. 1BR, 2BR, Studio" },
+              "size_sqft": { "type": "number" },
+              "purpose": { "type": "string", "enum": ["live", "invest", "rent"] },
+              "style": { "type": "string", "enum": ["modern_minimal", "luxury_arabic", "scandinavian", "industrial", "contemporary", "tropical_resort"] },
+              "off_plan": { "type": "boolean", "description": "Is the property still under construction?" }
+            },
+            "required": ["unit_type", "size_sqft", "purpose", "style"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "explore_tokenized_assets",
+          "description": "Lists available fractional ownership opportunities (tokenized real estate) on the Mashroi platform.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "min_yield": { "type": "number" },
+              "max_budget_aed": { "type": "number" },
+              "vara_compliant": {
+                "type": "boolean",
+                "description": "Filter for assets that are fully VARA approved for fractional ownership."
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "get_market_regime",
+          "description": "Analyzes 6 market signals (velocity, launches, demand, construction, handover, seasonality) to determine the current market regime and provide business directives.",
+          "parameters": {
+            "type": "object",
+            "properties": {}
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "get_project_price_reality",
+          "description": "Fetches the latest DLD transaction data for a specific project to compare listing prices with actual market reality.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "property_name": {
+                "type": "string",
+                "description": "The name of the property or project to analyze."
+              }
+            },
+            "required": [
+              "property_name"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "generate_offer",
+          "description": "Generate a branded property offer/proposal document for a specific property. Includes price, payment plan, area intel, and ROI projections.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "property_name": {
+                "type": "string",
+                "description": "Property/project name"
+              },
+              "buyer_budget": {
+                "type": "number",
+                "description": "Buyer budget in AED"
+              },
+              "intent": {
+                "type": "string",
+                "enum": [
+                  "invest",
+                  "live",
+                  "rent"
+                ]
+              }
+            },
+            "required": [
+              "property_name"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "generate_rental_contract",
+          "description": "Generate rental contract terms and analysis for a property. Includes estimated rent, yield projections, and contract rating.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "property_name": {
+                "type": "string"
+              },
+              "lease_years": {
+                "type": "integer",
+                "description": "Lease duration in years (default 1)"
+              },
+              "annual_rent_aed": {
+                "type": "number",
+                "description": "Proposed annual rent (optional, will estimate if not provided)"
+              }
+            },
+            "required": [
+              "property_name"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "analyze_investment",
+          "description": "Full investment analysis for a property: ROI breakdown, appreciation forecast, rental yield, mortgage scenarios, and buy/hold/sell recommendation.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "property_name": {
+                "type": "string"
+              },
+              "holding_years": {
+                "type": "integer",
+                "description": "Investment horizon in years (default 5)"
+              },
+              "down_payment_pct": {
+                "type": "number",
+                "description": "Down payment percentage (default 20)"
+              }
+            },
+            "required": [
+              "property_name"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "calculate_mortgage",
+          "description": "Calculate mortgage scenarios for a property: monthly payments, total cost, affordability check.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "property_name": {
+                "type": "string"
+              },
+              "down_payment_pct": {
+                "type": "number",
+                "description": "Down payment % (default 20)"
+              },
+              "rate_pct": {
+                "type": "number",
+                "description": "Annual interest rate % (default 4.5)"
+              },
+              "term_years": {
+                "type": "integer",
+                "description": "Mortgage term years (default 25)"
+              },
+              "monthly_income": {
+                "type": "number",
+                "description": "Buyer monthly income for affordability check"
+              }
+            },
+            "required": [
+              "property_name"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "compare_properties",
+          "description": "Side-by-side comparison of 2-4 properties on price, yield, safety band, area, developer, and scores. Pass property names separated by commas.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "property_names": {
+                "type": "string",
+                "description": "Comma-separated property names to compare, e.g. 'Marina Gate I, Binghatti Royale'"
+              }
+            },
+            "required": [
+              "property_names"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "get_area_intelligence",
+          "description": "Deep area intelligence report: median prices, yield, rent trends, developer mix, supply pipeline, growth signals.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "area": {
+                "type": "string",
+                "description": "Area name (e.g. 'Dubai Marina', 'JVC', 'Downtown Dubai')"
+              }
+            },
+            "required": [
+              "area"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "plan_investment_portfolio",
+          "description": "Split a budget across multiple properties for optimal portfolio: diversification, risk balance, income projections.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "total_budget": {
+                "type": "number",
+                "description": "Total investment budget in AED"
+              },
+              "risk_profile": {
+                "type": "string",
+                "enum": [
+                  "Conservative",
+                  "Balanced",
+                  "Aggressive"
+                ]
+              },
+              "num_properties": {
+                "type": "integer",
+                "description": "Target number of properties (default 3)"
+              },
+              "intent": {
+                "type": "string",
+                "enum": [
+                  "invest",
+                  "live",
+                  "rent"
+                ]
+              }
+            },
+            "required": [
+              "total_budget",
+              "risk_profile"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "get_market_overview",
+          "description": "Market overview: total assets, safety bands, score distributions, rent trends, system health.",
+          "parameters": {
+            "type": "object",
+            "properties": {}
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "generate_negotiation_plan",
+          "description": "Generate a negotiation strategy for buying a property: market position, comparable prices, leverage points, offer range, and tactics.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "property_name": {
+                "type": "string"
+              },
+              "target_discount_pct": {
+                "type": "number",
+                "description": "Desired discount percentage (default 5-10%)"
+              }
+            },
+            "required": [
+              "property_name"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "update_investor_profile",
+          "description": "Update the investor's profile based on what they just said. Call this whenever the user reveals preferences, constraints, or intent \u2014 even partial. The profile builds over time.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "risk_profile": {
+                "type": "string",
+                "enum": [
+                  "Conservative",
+                  "Balanced",
+                  "Aggressive"
+                ]
+              },
+              "horizon": {
+                "type": "string",
+                "enum": [
+                  "Ready",
+                  "6-12mo",
+                  "1-2yr",
+                  "2-4yr",
+                  "4yr+"
+                ]
+              },
+              "budget_min": {
+                "type": "number",
+                "description": "Minimum budget in AED"
+              },
+              "budget_max": {
+                "type": "number",
+                "description": "Maximum budget in AED (if range given)"
+              },
+              "preferred_areas": {
+                "type": "string",
+                "description": "Comma-separated preferred areas"
+              },
+              "excluded_areas": {
+                "type": "string",
+                "description": "Areas to avoid"
+              },
+              "beds_pref": {
+                "type": "string"
+              },
+              "intent": {
+                "type": "string",
+                "enum": [
+                  "invest",
+                  "live",
+                  "rent"
+                ]
+              },
+              "flexibility_notes": {
+                "type": "string",
+                "description": "What the user is flexible on"
+              },
+              "lifestyle_signals": {
+                "type": "string",
+                "description": "Lifestyle preferences mentioned: quiet, family, nightlife, beach, etc."
+              },
+              "deal_breakers": {
+                "type": "string",
+                "description": "Hard requirements or exclusions"
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "generate_document_pdf",
+          "description": "Generate a branded PDF document for any property analysis. Works for: offers, rental contracts, investment analysis, mortgage calculations, and negotiation strategies. Returns the filename of the generated PDF.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "property_name": {
+                "type": "string"
+              },
+              "document_type": {
+                "type": "string",
+                "enum": [
+                  "offer",
+                  "rental_contract",
+                  "investment_analysis",
+                  "mortgage",
+                  "negotiation"
+                ],
+                "description": "Type of PDF to generate"
+              },
+              "budget_aed": {
+                "type": "number",
+                "description": "Budget for offer documents"
+              },
+              "intent": {
+                "type": "string",
+                "enum": [
+                  "invest",
+                  "live",
+                  "rent"
+                ]
+              },
+              "annual_rent": {
+                "type": "number",
+                "description": "Annual rent for rental contracts"
+              },
+              "holding_years": {
+                "type": "integer",
+                "description": "For investment analysis"
+              }
+            },
+            "required": [
+              "property_name",
+              "document_type"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "generate_viewing_plan",
+          "description": "Generate a viewing plan for visiting properties. Includes questions to ask, red flags, and a checklist for each property.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "property_names": {
+                "type": "string",
+                "description": "Comma-separated property names to visit"
+              }
+            },
+            "required": [
+              "property_names"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "qualify_lead",
+          "description": "Qualify a potential buyer/renter through structured questions. Determines readiness: budget verified, timeline firm, financing ready, motivation clear.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "budget_confirmed": {
+                "type": "boolean",
+                "description": "Has the lead confirmed their budget?"
+              },
+              "financing_status": {
+                "type": "string",
+                "enum": [
+                  "cash",
+                  "pre_approved",
+                  "exploring",
+                  "unknown"
+                ]
+              },
+              "timeline": {
+                "type": "string",
+                "enum": [
+                  "immediate",
+                  "1-3_months",
+                  "3-6_months",
+                  "6-12_months",
+                  "exploring"
+                ]
+              },
+              "motivation": {
+                "type": "string",
+                "enum": [
+                  "invest",
+                  "live",
+                  "rent",
+                  "relocating",
+                  "upgrading",
+                  "unclear"
+                ]
+              },
+              "decision_maker": {
+                "type": "boolean",
+                "description": "Is this person the decision maker?"
+              }
+            },
+            "required": [
+              "budget_confirmed",
+              "financing_status",
+              "timeline",
+              "motivation"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "send_whatsapp",
+          "description": "Send a WhatsApp message to the investor. Can send property alerts, offer documents (PDF), viewing plans, market updates, or follow-up messages. Uses pre-approved templates.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "to_number": {
+                "type": "string",
+                "description": "Phone number with country code, e.g. +971501234567"
+              },
+              "investor_name": {
+                "type": "string",
+                "description": "Investor's first name for personalization"
+              },
+              "template": {
+                "type": "string",
+                "enum": [
+                  "property_alert",
+                  "offer_ready",
+                  "viewing_confirmation",
+                  "market_update",
+                  "lead_followup"
+                ],
+                "description": "Message template type"
+              },
+              "property_name": {
+                "type": "string",
+                "description": "Property name (for property_alert and offer_ready)"
+              },
+              "document_type": {
+                "type": "string",
+                "enum": [
+                  "offer",
+                  "rental_contract",
+                  "investment_analysis",
+                  "negotiation",
+                  "mortgage"
+                ],
+                "description": "Document type to attach (for offer_ready)"
+              },
+              "message_body": {
+                "type": "string",
+                "description": "Custom message body (for market_update and lead_followup)"
+              },
+              "headline": {
+                "type": "string",
+                "description": "Headline (for market_update)"
+              }
+            },
+            "required": [
+              "to_number",
+              "investor_name",
+              "template"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "call_investor",
+          "description": "Place an automated voice call to an investor. Use for property alerts, viewing reminders, or follow-ups. The call uses text-to-speech.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "to_number": {
+                "type": "string",
+                "description": "Phone number with country code"
+              },
+              "investor_name": {
+                "type": "string"
+              },
+              "call_type": {
+                "type": "string",
+                "enum": [
+                  "property_alert",
+                  "viewing_reminder",
+                  "followup"
+                ],
+                "description": "Type of call to make"
+              },
+              "property_name": {
+                "type": "string",
+                "description": "Property name (for alerts/reminders)"
+              },
+              "context": {
+                "type": "string",
+                "description": "Additional context for the call"
+              }
+            },
+            "required": [
+              "to_number",
+              "investor_name",
+              "call_type"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "scoring": {
+    "formula": "safety01 = 0.45 * (1 - timeline_risk) + 0.35 * liquidity + 0.20 * roi_score",
+    "classification_thresholds": {
+      "Conservative": ">= 0.75",
+      "Balanced": ">= 0.45",
+      "Speculative": "< 0.45"
+    },
+    "safety_bands": {
+      "Institutional Safe": "Conservative class + Completed + price_aed IS NOT NULL + confidence = high",
+      "Capital Safe": "Conservative class OR (Balanced + Completed/Handover2025)",
+      "Opportunistic": "Balanced class (remaining)",
+      "Speculative": "Speculative class"
+    },
+    "match_score_formula": "0.65 * market_score + 0.35 * match_score",
+    "match_score_weights": {
+      "budget_fit": 0.35,
+      "area_match": 0.25,
+      "beds_match": 0.2,
+      "intent_fit": 0.1,
+      "timeline_closeness": 0.1
+    }
+  },
+  "routing": {
+    "risk_profiles": [
+      "Conservative",
+      "Balanced",
+      "Aggressive"
+    ],
+    "horizons": [
+      "Ready",
+      "6-12mo",
+      "1-2yr",
+      "2-4yr",
+      "4yr+"
+    ],
+    "profile_gates": {
+      "Conservative": [
+        "Institutional Safe",
+        "Capital Safe"
+      ],
+      "Balanced": [
+        "Capital Safe",
+        "Opportunistic"
+      ],
+      "Aggressive": [
+        "Opportunistic",
+        "Speculative"
+      ]
+    },
+    "horizon_gates": {
+      "Ready": [
+        "Completed"
+      ],
+      "6-12mo": [
+        "Completed",
+        "Handover2025"
+      ],
+      "1-2yr": [
+        "Completed",
+        "Handover2025",
+        "Handover2026"
+      ],
+      "2-4yr": [
+        "Completed",
+        "Handover2025",
+        "Handover2026",
+        "Handover2027"
+      ],
+      "4yr+": [
+        "Completed",
+        "Handover2025",
+        "Handover2026",
+        "Handover2027",
+        "Handover2028_29"
+      ]
+    },
+    "excluded_always": [
+      "Handover2030+"
+    ]
+  },
+  "reason_codes": {
+    "positive": [
+      "INSTITUTIONAL_SAFE",
+      "CAPITAL_SAFE",
+      "NEAR_TERM_HANDOVER",
+      "HIGH_LIQUIDITY",
+      "MID_RANGE_ANCHOR",
+      "AFFORDABILITY_TAILWIND",
+      "ROI_HIGH_BAND",
+      "GEO_ROI_UPLIFT"
+    ],
+    "risk_flags": [
+      "SPECULATIVE_CLASS",
+      "LONG_HORIZON",
+      "LOW_LIQUIDITY",
+      "ULTRA_LUXURY_ILLQ",
+      "PREMIUM_DRAG",
+      "ROI_UNKNOWN",
+      "DATA_STALE"
+    ]
+  },
+  "data_model": {
+    "primary_table": "agent_inventory_view_v1",
+    "columns": 22,
+    "key_fields": {
+      "asset_id": "TEXT (primary key)",
+      "name": "TEXT",
+      "price_aed": "DOUBLE PRECISION",
+      "area": "TEXT",
+      "city": "TEXT",
+      "developer": "TEXT",
+      "bedrooms": "TEXT",
+      "handover_status": "TEXT (enum: Completed, Handover2025..2030+)",
+      "safety01": "DOUBLE PRECISION (0-1 score)",
+      "classification": "TEXT (Conservative/Balanced/Speculative)",
+      "safety_band": "TEXT (Institutional Safe/Capital Safe/Opportunistic/Speculative)",
+      "reason_codes": "TEXT (JSON array of positive signals)",
+      "risk_flags": "TEXT (JSON array of risk warnings)",
+      "drivers": "TEXT (JSON object with score breakdown)",
+      "gross_yield": "DOUBLE PRECISION",
+      "confidence": "TEXT (high/medium/low)"
+    },
+    "neon_functions": [
+      "agent_inventory_for_investor_v1(risk_profile, horizon)",
+      "agent_ranked_for_investor_v1(risk_profile, horizon, budget, area, beds, intent, limit)",
+      "compute_match_score(asset_id, budget, area, beds, intent)",
+      "generate_override_disclosure(asset_id, override_type, profile)"
+    ]
+  },
+  "whatsapp": {
+    "provider": "Twilio",
+    "templates": [
+      "property_alert",
+      "offer_ready",
+      "viewing_confirmation",
+      "market_update",
+      "lead_followup"
+    ],
+    "activation": "Set TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN",
+    "sandbox_number": "whatsapp:+14155238886"
+  },
+  "pdf": {
+    "engine": "fpdf2",
+    "document_types": [
+      "offer",
+      "rental_contract",
+      "investment_analysis",
+      "negotiation",
+      "mortgage"
+    ],
+    "branding": {
+      "header": "ENTRESTATE",
+      "font": "Helvetica (Latin-1 safe)",
+      "color_primary": "#0066CC",
+      "disclaimer": "Advisory only - not financial advice"
+    },
+    "unicode_handling": "_safe() sanitizer for Latin-1 font compatibility"
+  },
+  "profiles": {
+    "table": "investor_intent_profiles",
+    "fields": [
+      "risk_profile",
+      "horizon",
+      "budget_min",
+      "budget_max",
+      "preferred_areas",
+      "excluded_areas",
+      "beds_pref",
+      "intent",
+      "flexibility_notes",
+      "lifestyle_signals",
+      "deal_breakers",
+      "last_recommended",
+      "last_shortlisted",
+      "interaction_count",
+      "profile_confidence"
+    ],
+    "conversation_log": "conversation_log table (full audit trail)",
+    "confidence_levels": [
+      "low (<3 fields)",
+      "medium (3-4 fields)",
+      "high (5+ fields)"
+    ]
+  },
+  "governance": {
+    "rules": [
+      "LLM never picks, scores, or filters - only translates and narrates",
+      "All decisions trace to deterministic Neon functions",
+      "Override flow requires explicit disclosure + audit logging",
+      "System prompt enforces: never promise ROI, always mention risks, never invent data",
+      "reason_codes and risk_flags are frozen vocabulary - never invent new ones"
+    ],
+    "override_audit_table": "investor_override_audit",
+    "override_fields": [
+      "session_id",
+      "investor_profile",
+      "original_horizon",
+      "overridden_to",
+      "reason"
+    ]
+  },
+  "frontend": {
+    "chat_endpoint": {
+      "method": "POST",
+      "body": {
+        "message": "string",
+        "session_id": "string",
+        "model": "gemini|openai"
+      },
+      "response": {
+        "reply": "string",
+        "tool_calls": "array (optional)",
+        "profile_updated": "boolean"
+      }
+    },
+    "tool_endpoint": {
+      "method": "POST",
+      "body": {
+        "tool_name": "string",
+        "args": "object"
+      },
+      "response": "object (tool-specific)"
+    },
+    "pdf_endpoint": {
+      "method": "POST",
+      "body": {
+        "property_name": "string",
+        "document_type": "string"
+      },
+      "response": {
+        "pdf_url": "string",
+        "size_kb": "number"
+      }
+    },
+    "whatsapp_endpoint": {
+      "method": "POST",
+      "body": {
+        "to": "string",
+        "template": "string",
+        "params": "array",
+        "pdf_path": "string (optional)"
+      },
+      "response": {
+        "status": "string",
+        "message_sid": "string"
+      }
+    },
+    "profile_endpoint": {
+      "method": "GET",
+      "params": {
+        "session_id": "string"
+      },
+      "response": "investor_intent_profiles row"
+    },
+    "data_types_warning": {
+      "reason_codes": "TEXT containing JSON array - must JSON.parse() on frontend",
+      "risk_flags": "TEXT containing JSON array - must JSON.parse() on frontend",
+      "drivers": "TEXT containing JSON object - must JSON.parse() on frontend",
+      "price_aed": "DOUBLE PRECISION everywhere (no TEXT casts needed)"
+    }
+  }
+}

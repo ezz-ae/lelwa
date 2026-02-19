@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+sqlalchemy
+google-generativeai
+fpdf
+pandas
+twilio
+psycopg2-binary
+python-dotenv
