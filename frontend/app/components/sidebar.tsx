@@ -69,7 +69,7 @@ export function Sidebar() {
   const sidebarContent = (
     <div
       className={`relative flex border-r border-border bg-background py-4 transition-all duration-300 ease-in-out z-50 h-full ${
-        openPanel ? "w-[280px]" : "w-16"
+        openPanel ? "w-[240px]" : "w-16"
       }`}
       onMouseLeave={() => {
         if (!pinnedPanel) {

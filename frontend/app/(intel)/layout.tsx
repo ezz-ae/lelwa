@@ -1,11 +1,13 @@
 import type { ReactNode } from "react"
-import { IntelHeader } from "@/app/components/intel-header"
+import { Sidebar } from "@/app/components/sidebar"
 
 export default function IntelLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-background">
-      <IntelHeader />
-      <main className="mx-auto w-full max-w-6xl px-6 pb-16 pt-10 md:px-10">{children}</main>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+      <main className="flex-1 px-6 pb-16 pt-10 md:px-10">
+        <div className="mx-auto w-full max-w-5xl">{children}</div>
+      </main>
     </div>
   )
 }
