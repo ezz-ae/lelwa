@@ -109,27 +109,27 @@ export function WidgetCards() {
       {/* Assistant CTA Widget */}
       <div className="group relative overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 p-6 shadow-sm transition-all hover:shadow-lg">
         <img
-          src="/images/screenshot-202026-01-17-20at-208.png"
-          alt="Space background"
+          src="/lelwa-palette.jpeg"
+          alt="Lelwa palette"
           className="absolute inset-0 h-full w-full object-cover opacity-60"
         />
         <div className="relative flex h-full items-end">
           <div className="font-mono text-sm font-medium uppercase tracking-wider text-white">
-            TRY ASSISTANT IN ACTION
+            START A MARKET BRIEFING
           </div>
         </div>
       </div>
 
-      {/* Stock Widget */}
+      {/* Yield Widget */}
       <div className="group relative overflow-hidden rounded-3xl border border-border/50 bg-card p-6 shadow-sm transition-all hover:shadow-lg">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-2xl font-semibold text-foreground">NVDA</div>
-              <div className="text-sm text-muted-foreground">NVIDIA Corporation</div>
+              <div className="text-2xl font-semibold text-foreground">Yield Index</div>
+              <div className="text-sm text-muted-foreground">Dubai Marina</div>
             </div>
-            <div className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 dark:bg-red-950/30 dark:text-red-400">
-              ↘ 0.41%
+            <div className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
+              ↗ 1.4%
             </div>
           </div>
 
@@ -163,7 +163,7 @@ export function WidgetCards() {
             </svg>
           </div>
 
-          <div className="text-3xl font-semibold text-foreground">$186.23</div>
+          <div className="text-3xl font-semibold text-foreground">6.8%</div>
         </div>
       </div>
 

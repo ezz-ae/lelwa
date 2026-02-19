@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
+  Activity,
   Clock,
   Compass,
   Grid3x3,
@@ -19,7 +20,6 @@ import {
   BarChart3,
   Search,
   Users,
-  Bitcoin,
   MoreVertical,
   Calendar,
   Mail,
@@ -33,26 +33,16 @@ import { UpgradeModal } from "./upgrade-modal"
 import { AccountMenu } from "./account-menu"
 
 const historyItems = [
-  "How to build a modern web app",
-  "Best practices for React hooks",
-  "Understanding TypeScript generics",
-  "Next.js 15 new features",
-  "Tailwind CSS design patterns",
-  "API integration strategies",
-  "Database optimization tips",
-  "Authentication implementation guide",
-  "State management solutions",
-  "Performance optimization techniques",
-  "Responsive design approaches",
-  "SEO best practices 2026",
-  "Component composition patterns",
-  "Error handling in async code",
-  "Testing strategies for frontend",
-  "Deployment workflows explained",
-  "Git branching strategies",
-  "Code review best practices",
-  "Documentation writing tips",
-  "Debugging techniques advanced",
+  "Best yield under AED 2M in Dubai Marina",
+  "Compare Emaar vs Damac in 2025",
+  "Top family communities for 3-bed villas",
+  "Off-plan vs ready ROI for Business Bay",
+  "Highest demand towers this quarter",
+  "Capital safe assets with exit liquidity",
+  "Upcoming launches with strong price reality",
+  "Studio investments under AED 1M",
+  "Rent-to-own opportunities in Dubai",
+  "Best metro-connected communities",
 ]
 
 export function Sidebar() {
@@ -91,7 +81,7 @@ export function Sidebar() {
         {/* Logo */}
         <Button variant="ghost" size="icon" className="mb-6 h-10 w-10 shrink-0">
           <div className="flex h-8 w-8 items-center justify-center">
-            <Image src="/images/perplexity-logo.png" alt="Logo" width={32} height={32} className="object-contain" />
+            <Image src="/icon.svg" alt="Lelwa" width={32} height={32} className="object-contain" />
           </div>
         </Button>
 
@@ -130,7 +120,7 @@ export function Sidebar() {
             >
               <Compass className="h-5 w-5" />
             </Button>
-            <div className="text-[9px] text-muted-foreground text-center mt-1 font-medium">Discover</div>
+            <div className="text-[9px] text-muted-foreground text-center mt-1 font-medium">Markets</div>
           </div>
 
           <div className="relative mb-2">
@@ -145,7 +135,7 @@ export function Sidebar() {
             >
               <Grid3x3 className="h-5 w-5" />
             </Button>
-            <div className="text-[9px] text-muted-foreground text-center mt-1 font-medium">Spaces</div>
+            <div className="text-[9px] text-muted-foreground text-center mt-1 font-medium">Portfolios</div>
           </div>
 
           <div className="relative mb-2">
@@ -160,7 +150,7 @@ export function Sidebar() {
             >
               <TrendingUp className="h-5 w-5" />
             </Button>
-            <div className="text-[9px] text-muted-foreground text-center mt-1 font-medium">Finance</div>
+            <div className="text-[9px] text-muted-foreground text-center mt-1 font-medium">Signals</div>
           </div>
 
           <div className="relative mb-2">
@@ -201,13 +191,7 @@ export function Sidebar() {
           >
             <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-visible ring-2 ring-primary/60">
               <div className="h-9 w-9 rounded-full overflow-hidden">
-                <Image
-                  src="/images/user-avatar.jpg"
-                  alt="Profile"
-                  width={36}
-                  height={36}
-                  className="object-cover"
-                />
+                <Image src="/icon.svg" alt="Profile" width={36} height={36} className="object-contain" />
               </div>
               <span className="absolute -bottom-1 -right-1 text-[7px] font-bold bg-primary text-primary-foreground px-1 py-0.5 rounded">
                 pro
@@ -269,7 +253,7 @@ export function Sidebar() {
           {openPanel === "discover" && (
             <div className="flex flex-col h-full animate-in fade-in duration-300">
               <div className="flex items-center justify-between px-3 py-2.5">
-                <h2 className="text-sm font-semibold">Discover</h2>
+                <h2 className="text-sm font-semibold">Markets</h2>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -297,7 +281,7 @@ export function Sidebar() {
           {openPanel === "spaces" && (
             <div className="flex flex-col h-full animate-in fade-in duration-300">
               <div className="flex items-center justify-between px-3 py-2.5">
-                <h2 className="text-sm font-semibold">Spaces</h2>
+                <h2 className="text-sm font-semibold">Portfolios</h2>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -312,11 +296,11 @@ export function Sidebar() {
               <div className="p-1.5">
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <LayoutGrid className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Templates</span>
+                  <span className="font-normal">Strategy templates</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <Plus className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Create new Space</span>
+                  <span className="font-normal">Create new portfolio</span>
                 </button>
               </div>
               <div className="px-1.5 pb-1.5">
@@ -328,7 +312,7 @@ export function Sidebar() {
                 </div>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <FolderClosed className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">My Space</span>
+                  <span className="font-normal">My portfolio</span>
                 </button>
               </div>
             </div>
@@ -337,7 +321,7 @@ export function Sidebar() {
           {openPanel === "finance" && (
             <div className="flex flex-col h-full animate-in fade-in duration-300">
               <div className="flex items-center justify-between px-3 py-2.5">
-                <h2 className="text-sm font-semibold">Finance</h2>
+                <h2 className="text-sm font-semibold">Signals</h2>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -351,28 +335,28 @@ export function Sidebar() {
               </div>
               <div className="p-1.5">
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
-                  <span className="text-base shrink-0">🇺🇸</span>
-                  <span className="font-normal">US Markets</span>
-                </button>
-                <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
-                  <Bitcoin className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Crypto</span>
+                  <TrendingUp className="h-4 w-4 shrink-0" />
+                  <span className="font-normal">Growth districts</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <BarChart3 className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Earnings</span>
+                  <span className="font-normal">Yield leaders</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
-                  <TrendingUp className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Predictions</span>
+                  <BarChart3 className="h-4 w-4 shrink-0" />
+                  <span className="font-normal">Launch pipeline</span>
+                </button>
+                <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
+                  <Activity className="h-4 w-4 shrink-0" />
+                  <span className="font-normal">Price reality</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <Search className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Screener</span>
+                  <span className="font-normal">Investor bands</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <Users className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Politicians</span>
+                  <span className="font-normal">Broker insights</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <Star className="h-4 w-4 shrink-0" />
@@ -385,15 +369,15 @@ export function Sidebar() {
               <div className="p-1.5">
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <Search className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Stock analysis</span>
+                  <span className="font-normal">Run area scan</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <Search className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Stock comparison</span>
+                  <span className="font-normal">Compare projects</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <Search className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Crypto price</span>
+                  <span className="font-normal">Generate briefing</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <Search className="h-4 w-4 shrink-0" />
@@ -416,15 +400,15 @@ export function Sidebar() {
               <div className="p-1.5 pt-3">
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <Compass className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Discover</span>
+                  <span className="font-normal">Markets</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <Grid3x3 className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Spaces</span>
+                  <span className="font-normal">Portfolios</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <TrendingUp className="h-4 w-4 shrink-0" />
-                  <span className="font-normal">Finance</span>
+                  <span className="font-normal">Signals</span>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] hover:bg-accent rounded transition-colors">
                   <span className="text-base shrink-0">✈️</span>

@@ -4,32 +4,38 @@ import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Search, Focus, Grid3x3, Globe, Cpu, Paperclip, Mic } from "lucide-react"
 
-const suggestions = ["test", "test internet speed", "test my speed", "testament", "test my internet speed"]
+const suggestions = [
+  "Best yields under 2M in Dubai Marina",
+  "Compare Emaar vs Damac projects",
+  "Capital safe assets with 5%+ yield",
+  "Top off-plan launches this quarter",
+  "Ready properties near metro stations",
+]
 
 type Mode = "search" | "deep-research" | "create"
 
 const modeTooltips = {
   search: {
-    title: "Search",
-    description: "Get fast answers to everyday questions",
+    title: "Quick scan",
+    description: "Fast answers on pricing, yields, and neighborhoods",
     proEnabled: true,
-    proDescription: "Advanced search with 10x the sources; powered by top models",
+    proDescription: "Instant signal scan across live inventory and DLD data",
     footer: "Unlimited access for subscribers",
   },
   "deep-research": {
-    title: "Deep research",
-    description: "Create in-depth reports with more sources, charts, and advanced reasoning",
+    title: "Market briefing",
+    description: "Generate an in-depth report with sources, charts, and risk bands",
     proEnabled: true,
-    proDescription: "In-depth reports with more sources, charts, and advanced reasoning",
+    proDescription: "Multi-source reports with pricing reality and exit liquidity",
     footer: "Extended access for subscribers",
   },
   create: {
-    title: "Create files and apps",
-    description: "Turn your ideas into docs, slides, dashboards, and more",
+    title: "Portfolio plan",
+    description: "Split budgets, build portfolios, and track scenarios",
     badge: "New",
     proEnabled: true,
-    proDescription: "Turn your ideas into completed docs, slides, dashboards, and more",
-    footer: "48 queries remaining this month",
+    proDescription: "Build multi-asset portfolios with timing and risk filters",
+    footer: "48 plans remaining this month",
   },
 }
 

@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 .Python
 venv/
+.tmp/
 
 # Environment files
 .env
@@ -25,6 +26,10 @@ pnpm-debug.log*
 
 # Large internal specs with secrets
 lelwa.com  Full project backend  .yaml
+
+# Reference design zips
+terra-landing-page.zip
+perplexity-ai-clone-chat-ui-design.zip
 
 # OS
 .DS_Store
