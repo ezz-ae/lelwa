@@ -94,6 +94,38 @@ export default function DashboardPage() {
     setSessionId(newId)
   }, [])
 
+  // Function to update requirements based on message content
+  const updateRequirements = (content: string) => {
+    setRequiredFields((prevFields) => {
+      const newFields = [...prevFields]
+      const lowerContent = content.toLowerCase()
+
+      const checkAndUpdate = (fieldId: string, keywords: string[]) => {
+        const field = newFields.find((f) => f.id === fieldId)
+        if (field && field.status === "pending") {
+          if (keywords.some((keyword) => lowerContent.includes(keyword))) {
+            field.status = "checked"
+          }
+        }
+      }
+
+      checkAndUpdate("property_type", ["apartment", "villa", "townhouse"])
+      checkAndUpdate("budget", ["budget", "price", "aed", "dirham", "usd", "$", "million"])
+      checkAndUpdate("bedrooms", ["bedroom", "bed", "br"])
+      checkAndUpdate("amenities", ["pool", "gym", "parking", "balcony"])
+      
+      return newFields
+    })
+  }
+
+  // Effect to process messages and update requirements
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      updateRequirements(lastMessage.content)
+    }
+  }, [messages])
+
   const handleSend = async () => {
     const trimmed = input.trim()
     if (!trimmed || isSending) return
