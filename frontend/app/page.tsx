@@ -80,68 +80,70 @@ export default function MarketingLanding() {
         </div>
 
         <header className="relative z-10 px-6 md:px-12 pt-6">
-          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#0B0C0F]/80 px-5 py-3 backdrop-blur">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                <Sparkles className="h-5 w-5 text-teal-300" />
+          <div className="mx-auto w-full max-w-6xl">
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#0B0C0F]/80 px-5 py-3 backdrop-blur">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
+                  <Sparkles className="h-5 w-5 text-teal-300" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-white/50">Lelwa</p>
+                  <p className="font-display text-sm text-white">Real Estate Intelligence</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-white/50">Lelwa</p>
-                <p className="font-display text-sm text-white">Real Estate Intelligence</p>
+              <nav className="hidden md:flex items-center gap-6 text-sm text-white/70">
+                <Link href="/pulse" className="hover:text-white transition">Pulse</Link>
+                <Link href="/signals" className="hover:text-white transition">Signals</Link>
+                <Link href="/studio" className="hover:text-white transition">Studio</Link>
+                <Link href="/intake" className="hover:text-white transition">Intake</Link>
+                <Link href="/briefing" className="hover:text-white transition">Briefing</Link>
+              </nav>
+              <div className="hidden md:flex items-center gap-3">
+                <Button asChild variant="outline" className="rounded-full border-white/20 text-white">
+                  <Link href="/studio">Enter studio</Link>
+                </Button>
+                <Button asChild className="rounded-full">
+                  <Link href="/briefing">
+                    Book briefing
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((prev) => !prev)}
+                className="md:hidden text-white"
+                aria-label="Toggle menu"
+              >
+                {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
             </div>
-            <nav className="hidden md:flex items-center gap-6 text-sm text-white/70">
-              <Link href="/pulse" className="hover:text-white transition">Pulse</Link>
-              <Link href="/signals" className="hover:text-white transition">Signals</Link>
-              <Link href="/studio" className="hover:text-white transition">Studio</Link>
-              <Link href="/intake" className="hover:text-white transition">Intake</Link>
-              <Link href="/briefing" className="hover:text-white transition">Briefing</Link>
-            </nav>
-            <div className="hidden md:flex items-center gap-3">
-              <Button asChild variant="outline" className="rounded-full border-white/20 text-white">
-                <Link href="/studio">Enter studio</Link>
-              </Button>
-              <Button asChild className="rounded-full">
-                <Link href="/briefing">
-                  Book briefing
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setMenuOpen((prev) => !prev)}
-              className="md:hidden text-white"
-              aria-label="Toggle menu"
-            >
-              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+            {menuOpen && (
+              <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B0C0F]/90 px-5 py-4 text-sm text-white/70 md:hidden">
+                <div className="flex flex-col gap-3">
+                  <Link href="/pulse" onClick={() => setMenuOpen(false)}>
+                    Pulse
+                  </Link>
+                  <Link href="/signals" onClick={() => setMenuOpen(false)}>
+                    Signals
+                  </Link>
+                  <Link href="/studio" onClick={() => setMenuOpen(false)}>
+                    Studio
+                  </Link>
+                  <Link href="/intake" onClick={() => setMenuOpen(false)}>
+                    Intake
+                  </Link>
+                  <Link href="/briefing" onClick={() => setMenuOpen(false)}>
+                    Briefing
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
-          {menuOpen && (
-            <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B0C0F]/90 px-5 py-4 text-sm text-white/70 md:hidden">
-              <div className="flex flex-col gap-3">
-                <Link href="/pulse" onClick={() => setMenuOpen(false)}>
-                  Pulse
-                </Link>
-                <Link href="/signals" onClick={() => setMenuOpen(false)}>
-                  Signals
-                </Link>
-                <Link href="/studio" onClick={() => setMenuOpen(false)}>
-                  Studio
-                </Link>
-                <Link href="/intake" onClick={() => setMenuOpen(false)}>
-                  Intake
-                </Link>
-                <Link href="/briefing" onClick={() => setMenuOpen(false)}>
-                  Briefing
-                </Link>
-              </div>
-            </div>
-          )}
         </header>
 
         <section className="relative z-10 px-6 md:px-12 pt-16 pb-20">
-          <div className="grid gap-12 lg:grid-cols-[1.15fr_0.85fr] items-center">
+          <div className="mx-auto w-full max-w-6xl grid gap-12 lg:grid-cols-[1.15fr_0.85fr] items-center">
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge className="bg-white/10 text-white border-white/10">Dubai / UAE</Badge>
@@ -224,7 +226,7 @@ export default function MarketingLanding() {
       </div>
 
       <section className="px-6 md:px-12 pb-16">
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="mx-auto w-full max-w-6xl grid gap-6 md:grid-cols-3">
           {signalHighlights.map((highlight) => {
             const Icon = highlight.icon
             return (
@@ -245,7 +247,7 @@ export default function MarketingLanding() {
       </section>
 
       <section className="px-6 md:px-12 pb-20">
-        <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 md:p-12">
+        <div className="mx-auto w-full max-w-6xl rounded-[32px] border border-white/10 bg-white/5 p-8 md:p-12">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-white/50">Coverage map</p>
@@ -270,7 +272,7 @@ export default function MarketingLanding() {
       </section>
 
       <section className="px-6 md:px-12 pb-24">
-        <div className="rounded-[32px] border border-white/10 bg-gradient-to-r from-teal-500/10 via-transparent to-orange-500/10 p-8 md:p-12">
+        <div className="mx-auto w-full max-w-6xl rounded-[32px] border border-white/10 bg-gradient-to-r from-teal-500/10 via-transparent to-orange-500/10 p-8 md:p-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-white/50">Ready to move</p>

@@ -18,7 +18,7 @@ export function IntelHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur">
-      <div className="flex flex-col gap-4 px-6 py-4 md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-4 md:flex-row md:items-center md:justify-between md:px-10">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Lelwa Intelligence</p>
           <h1 className="font-display text-xl text-foreground">Market Command Center</h1>
