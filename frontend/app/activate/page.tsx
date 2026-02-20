@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle2, Sparkles } from "lucide-react"
 import { chatActions } from "@/lib/lelwa-actions"
 
-const roles = ["Sales Agent", "Broker", "Investor", "Owner", "Team"]
+const roles = ["Sales", "Broker", "Investor", "Owner", "Team"]
 
 const callLeadOptions = [
   "Existing data",

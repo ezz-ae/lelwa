@@ -34,8 +34,14 @@ export function Sidebar() {
             <Image src="/icon.svg" alt="Lelwa" width={26} height={26} className="object-contain" />
           </Link>
 
-          <Link
-            href="/studio"
+          <button
+            type="button"
+            onClick={() => {
+              // Generate a fresh session so the studio starts clean
+              const freshId = `lelwa_${crypto.randomUUID()}`
+              window.localStorage.setItem("lelwa_session_id", freshId)
+              window.location.href = "/studio"
+            }}
             className="flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
             aria-label="New chat"
           >
@@ -43,7 +49,7 @@ export function Sidebar() {
               <Plus className="h-4 w-4" />
             </div>
             <span>New chat</span>
-          </Link>
+          </button>
         </div>
 
         {/* Navigation */}

@@ -252,8 +252,19 @@ class ToolExecutor:
         }, session_id)
 
     def tool_generate_property_visual(self, args: dict, session_id: str):
-        """Generates a Canva-style HTML property card."""
-        return {"error": "The 'generate_property_visual' tool is not yet implemented."}
+        """Generates a property summary card and returns it as a PDF."""
+        prop_name = args.get("property_name")
+        if not prop_name:
+            return {"error": "property_name is required"}
+
+        snapshot = self._get_property_snapshot(prop_name)
+        if not snapshot:
+            return {"error": f"Property '{prop_name}' not found in the database."}
+
+        return self.tool_generate_document_pdf({
+            "document_type": "property_visual",
+            "property_name": prop_name,
+        }, session_id)
 
     def tool_generate_viewing_plan(self, args: dict, session_id: str):
         """Generates a viewing plan for visiting properties."""

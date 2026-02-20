@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -115,6 +115,30 @@ export default function ConnectPage() {
     open: boolean
     channel: ChannelDef | null
   }>({ open: false, channel: null })
+
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
+
+  // Load connected channels from backend on mount
+  useEffect(() => {
+    async function loadChannels() {
+      try {
+        const res = await fetch(`${apiBase}/v1/channels?user_id=default`)
+        if (!res.ok) return
+        const data = await res.json()
+        // data is { whatsapp: { status, updated_at }, voice: { ... } }
+        const ids = new Set<string>()
+        for (const [key, val] of Object.entries(data)) {
+          if ((val as { status: string })?.status === "connected") {
+            ids.add(key)
+          }
+        }
+        if (ids.size > 0) setConnected(ids)
+      } catch {
+        // Backend not reachable — keep empty state
+      }
+    }
+    loadChannels()
+  }, [apiBase])
 
   function openSheet(ch: ChannelDef) {
     setSheet({ open: true, channel: ch })

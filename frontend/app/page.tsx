@@ -7,16 +7,18 @@ import {
   CheckCircle2,
   Home,
   MessageSquare,
+  Plug,
   Sparkles,
   UserCircle2,
 } from "lucide-react"
 import { primaryActions } from "@/lib/lelwa-actions"
+import { WidgetCards } from "./components/widget-cards"
 
 const railLinks = [
   { href: "/", icon: Home, label: "Home" },
   { href: "/studio", icon: MessageSquare, label: "Chat" },
   { href: "/briefing", icon: CheckCircle2, label: "Results" },
-  { href: "/connect", icon: Sparkles, label: "Connect" },
+  { href: "/connect", icon: Plug, label: "Connect" },
 ]
 
 export default function MarketingLanding() {
@@ -117,24 +119,11 @@ export default function MarketingLanding() {
                   )
                 })}
               </div>
+            </section>
 
-              {/* Action chips row */}
-              <div className="mt-6 flex w-full flex-wrap items-center justify-center gap-2">
-                {primaryActions.map((action) => (
-                  <Link
-                    key={action.id}
-                    href={`/studio?action=${action.id}`}
-                    className="rounded-full border px-4 py-2 text-xs font-medium text-foreground/80 transition hover:text-foreground"
-                    style={{
-                      borderColor: action.chip.border,
-                      background: action.chip.background,
-                    }}
-                  >
-                    {action.label}
-                  </Link>
-                ))}
-              </div>
-
+            {/* Widget cards row */}
+            <section className="relative z-10 mt-10">
+              <WidgetCards />
             </section>
           </div>
         </main>

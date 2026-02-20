@@ -1,8 +1,8 @@
 {
   "version": "2.0.0",
   "generated": "2026-02-11T17:03:36.329519",
-  "platform": "Entrestate Intelligence Engine",
-  "description": "Lelwa + Mashroi: Dual-platform real estate intelligence ecosystem for Dubai/UAE",
+  "platform": "Entrestate Data Engine",
+  "description": "Lelwa + Mashroi: Dual-platform real estate data ecosystem for Dubai/UAE",
   "architecture": {
     "dual_platform": {
       "lelwa.com": "Investor-facing intelligence. FREE. Character: Lelwa (The Pearl)",
@@ -764,6 +764,24 @@
               "to_number",
               "investor_name",
               "call_type"
+            ]
+          }
+        }
+      },
+      {
+        "function": {
+          "name": "generate_property_visual",
+          "description": "Generate a branded property summary card as a PDF. Includes key property data, pricing, and area context.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "property_name": {
+                "type": "string",
+                "description": "The name of the property or project to generate a visual for"
+              }
+            },
+            "required": [
+              "property_name"
             ]
           }
         }

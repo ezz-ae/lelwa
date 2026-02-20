@@ -1,4 +1,6 @@
 "use client"
+
+import { useRouter } from "next/navigation"
 import {
   User,
   Settings,
@@ -24,26 +26,26 @@ const menuSections = [
   {
     label: "Account",
     items: [
-      { icon: User, label: "Account" },
-      { icon: Settings2, label: "Preferences" },
-      { icon: ToggleLeft, label: "Personalization" },
+      { icon: User, label: "Account", href: "/activate" },
+      { icon: Settings2, label: "Preferences", href: "/activate" },
+      { icon: ToggleLeft, label: "Personalization", href: "/activate" },
     ],
   },
   {
     label: "Tools",
     items: [
-      { icon: Keyboard, label: "Shortcuts" },
-      { icon: Calendar, label: "Tasks" },
-      { icon: Bell, label: "Notifications" },
-      { icon: Plug, label: "Connections" },
+      { icon: Keyboard, label: "Shortcuts", href: "/studio" },
+      { icon: Calendar, label: "Tasks", href: "/studio" },
+      { icon: Bell, label: "Notifications", href: "/briefing" },
+      { icon: Plug, label: "Connections", href: "/connect" },
     ],
   },
   {
     label: "Support",
     items: [
-      { icon: Mail, label: "Support" },
-      { icon: Gem, label: "Packages" },
-      { icon: Settings, label: "All settings" },
+      { icon: Mail, label: "Support", href: "mailto:hello@lelwa.com" },
+      { icon: Gem, label: "Packages", action: "upgrade" as const },
+      { icon: Settings, label: "All settings", href: "/connect" },
     ],
   },
 ]
@@ -54,7 +56,27 @@ const profiles = [
 ]
 
 export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
+  const router = useRouter()
+
   if (!isOpen) return null
+
+  function navigate(href: string) {
+    onClose()
+    if (href.startsWith("mailto:")) {
+      window.open(href)
+    } else {
+      router.push(href)
+    }
+  }
+
+  function handleLogout() {
+    onClose()
+    window.localStorage.removeItem("lelwa_session_id")
+    window.localStorage.removeItem("lelwa_strategy_profile")
+    window.localStorage.removeItem("lelwa_strategy_actions")
+    window.localStorage.removeItem("lelwa_login_contact")
+    router.push("/login")
+  }
 
   return (
     <>
@@ -84,9 +106,14 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
               </p>
               {section.items.map((item) => {
                 const Icon = item.icon
+                const href = "href" in item ? item.href : undefined
                 return (
                   <button
                     key={item.label}
+                    onClick={() => {
+                      if (href) navigate(href)
+                      else onClose()
+                    }}
                     className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
                   >
                     <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -103,6 +130,7 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
           {profiles.map((profile) => (
             <button
               key={profile.name}
+              onClick={onClose}
               className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-accent"
             >
               <span
@@ -121,7 +149,10 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
 
           <div className="my-1 border-t border-border/40" />
 
-          <button className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          >
             <LogOut className="h-4 w-4 shrink-0" />
             <span>Log out</span>
           </button>

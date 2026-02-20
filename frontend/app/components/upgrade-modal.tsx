@@ -1,8 +1,10 @@
 "use client"
 
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Check, Gem, X } from "lucide-react"
+import { Check, Gem, Loader2, X } from "lucide-react"
 import { actionThemes, neutralActionTheme } from "@/lib/lelwa-actions"
 
 interface UpgradeModalProps {
@@ -13,16 +15,17 @@ interface UpgradeModalProps {
 const packages = [
   {
     name: "Lelwa Core",
-    tagline: "For independent agents",
+    tagline: "For independent brokers",
     actions: ["Run Ads", "Refresh Listing", "Qualify Leads"],
     features: [
-      "Auto-refresh listings weekly",
+      "Refresh listings weekly",
       "Qualify inbound leads instantly",
       "Launch targeted ad copy in one click",
       "Up to 50 leads / month",
     ],
     recommended: false,
     cta: "Get Core",
+    activateActions: ["run-ads", "refresh-listing", "qualify-leads"],
   },
   {
     name: "Lelwa Closer",
@@ -37,6 +40,7 @@ const packages = [
     ],
     recommended: true,
     cta: "Get Closer",
+    activateActions: ["calls", "create-offer", "create-contract"],
   },
   {
     name: "Lelwa Team",
@@ -51,11 +55,39 @@ const packages = [
     ],
     recommended: false,
     cta: "Contact Sales",
+    activateActions: [] as string[],
   },
 ]
 
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
+  const router = useRouter()
+  const [selected, setSelected] = useState<string | null>(null)
+
   if (!isOpen) return null
+
+  function handleSelect(pack: typeof packages[number]) {
+    if (pack.cta === "Contact Sales") {
+      window.open("mailto:hello@lelwa.com?subject=Lelwa Team — interest", "_blank")
+      return
+    }
+
+    setSelected(pack.name)
+
+    // Store selected actions and redirect to studio
+    if (pack.activateActions.length > 0) {
+      window.localStorage.setItem(
+        "lelwa_strategy_actions",
+        JSON.stringify(pack.activateActions),
+      )
+    }
+    window.localStorage.setItem("lelwa_package", pack.name)
+
+    setTimeout(() => {
+      setSelected(null)
+      onClose()
+      router.push("/studio")
+    }, 600)
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-sm animate-in fade-in duration-200">
@@ -85,63 +117,75 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
           {/* Package cards */}
           <div className="grid gap-4 md:grid-cols-3">
-            {packages.map((pack) => (
-              <Card
-                key={pack.name}
-                className={`relative border bg-gradient-to-br from-white/10 via-white/5 to-transparent transition-all ${
-                  pack.recommended
-                    ? "border-violet-500/40 shadow-lg shadow-violet-500/10"
-                    : "border-border/60"
-                }`}
-              >
-                {pack.recommended && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="rounded-full border border-violet-500/40 bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-0.5 text-[11px] font-semibold text-white shadow-sm">
-                      Most popular
-                    </span>
-                  </div>
-                )}
-                <CardContent className="space-y-5 pt-6">
-                  <div>
-                    <p className="text-lg font-semibold text-foreground">{pack.name}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{pack.tagline}</p>
-                  </div>
+            {packages.map((pack) => {
+              const isSelected = selected === pack.name
+              return (
+                <Card
+                  key={pack.name}
+                  className={`relative border bg-gradient-to-br from-white/10 via-white/5 to-transparent transition-all ${
+                    pack.recommended
+                      ? "border-violet-500/40 shadow-lg shadow-violet-500/10"
+                      : "border-border/60"
+                  }`}
+                >
+                  {pack.recommended && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="rounded-full border border-violet-500/40 bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+                        Most popular
+                      </span>
+                    </div>
+                  )}
+                  <CardContent className="space-y-5 pt-6">
+                    <div>
+                      <p className="text-lg font-semibold text-foreground">{pack.name}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{pack.tagline}</p>
+                    </div>
 
-                  {/* Action chips */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {pack.actions.map((action) => {
-                      const theme = actionThemes.find((item) => item.label === action) ?? neutralActionTheme
-                      return (
-                        <span
-                          key={action}
-                          className="rounded-full border px-2.5 py-0.5 text-[11px] font-medium text-foreground"
-                          style={{
-                            borderColor: theme.chip.border,
-                            background: theme.chip.background,
-                          }}
-                        >
-                          {action}
-                        </span>
-                      )
-                    })}
-                  </div>
+                    {/* Action chips */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {pack.actions.map((action) => {
+                        const theme = actionThemes.find((item) => item.label === action) ?? neutralActionTheme
+                        return (
+                          <span
+                            key={action}
+                            className="rounded-full border px-2.5 py-0.5 text-[11px] font-medium text-foreground"
+                            style={{
+                              borderColor: theme.chip.border,
+                              background: theme.chip.background,
+                            }}
+                          >
+                            {action}
+                          </span>
+                        )
+                      })}
+                    </div>
 
-                  {/* Feature list */}
-                  <ul className="space-y-2">
-                    {pack.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
+                    {/* Feature list */}
+                    <ul className="space-y-2">
+                      {pack.features.map((feature) => (
+                        <li key={feature} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
 
-                  <Button className="w-full rounded-full" variant={pack.recommended ? "default" : "outline"}>
-                    {pack.cta}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    <Button
+                      className="w-full rounded-full"
+                      variant={pack.recommended ? "default" : "outline"}
+                      disabled={isSelected}
+                      onClick={() => handleSelect(pack)}
+                    >
+                      {isSelected ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Opening console…</>
+                      ) : (
+                        pack.cta
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
 
           <p className="text-center text-[12px] text-muted-foreground/60">

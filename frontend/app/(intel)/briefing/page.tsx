@@ -1,8 +1,21 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowUpRight, CalendarCheck, CheckCircle2, FileText, Megaphone, MessageSquare } from "lucide-react"
+import {
+  ArrowUpRight,
+  CalendarCheck,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Megaphone,
+  MessageSquare,
+  Plug,
+  Sparkles,
+} from "lucide-react"
 
 const deliverables = [
   {
@@ -37,28 +50,42 @@ const deliverables = [
   },
 ]
 
-const dailyWins = [
-  {
-    title: "Inbox cleared",
-    detail: "Every new lead is answered and tagged.",
-    status: "done",
-    statusLabel: "Complete",
-  },
-  {
-    title: "Viewings scheduled",
-    detail: "Suggested slots, reminders, and confirmations sent.",
-    status: "done",
-    statusLabel: "Complete",
-  },
-  {
-    title: "Offer pack ready",
-    detail: "Shareable PDF + message to close faster.",
-    status: "ready",
-    statusLabel: "Ready",
-  },
-]
+interface ChannelStatus {
+  [key: string]: { status: string; updated_at: string }
+}
 
 export default function BriefingPage() {
+  const [connectedChannels, setConnectedChannels] = useState<string[]>([])
+  const [hasSession, setHasSession] = useState(false)
+
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
+
+  useEffect(() => {
+    // Check if user has an active session
+    const sessionId = window.localStorage.getItem("lelwa_session_id")
+    setHasSession(Boolean(sessionId))
+
+    // Check connected channels
+    async function loadChannels() {
+      try {
+        const res = await fetch(`${apiBase}/v1/channels?user_id=default`)
+        if (!res.ok) return
+        const data: ChannelStatus = await res.json()
+        const connected: string[] = []
+        for (const [key, val] of Object.entries(data)) {
+          if (val?.status === "connected") connected.push(key)
+        }
+        setConnectedChannels(connected)
+      } catch {
+        // Backend not reachable
+      }
+    }
+    loadChannels()
+  }, [apiBase])
+
+  const readyCount = connectedChannels.length
+  const channelNames: Record<string, string> = { whatsapp: "WhatsApp", voice: "Voice calls" }
+
   return (
     <div className="space-y-8">
       <div>
@@ -112,45 +139,106 @@ export default function BriefingPage() {
           </CardContent>
         </Card>
 
-        {/* Today's wins card */}
+        {/* Status card — dynamic based on real state */}
         <Card className="border-border/60 bg-gradient-to-br from-white/10 via-white/5 to-transparent">
           <CardContent className="space-y-5 pt-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Today's wins</p>
-              <h3 className="text-lg font-semibold text-foreground">Simple outcomes your clients feel</h3>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Your setup</p>
+              <h3 className="text-lg font-semibold text-foreground">Console readiness</h3>
               <p className="mt-1.5 text-sm text-muted-foreground">
-                Lelwa keeps the conversation moving so you can focus on the relationship.
+                Complete these steps to get full value from Lelwa.
               </p>
             </div>
             <div className="space-y-2.5">
-              {dailyWins.map((win) => (
-                <div
-                  key={win.title}
-                  className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/60 p-4 transition-colors hover:bg-background/80"
-                >
-                  <div className="flex items-start gap-3">
+              {/* Step 1: Session started */}
+              <div className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/60 p-4 transition-colors hover:bg-background/80">
+                <div className="flex items-start gap-3">
+                  {hasSession ? (
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{win.title}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{win.detail}</p>
-                    </div>
+                  ) : (
+                    <Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50" />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">First conversation</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {hasSession ? "Session active. Your data is being prepared." : "Drop a lead or listing to start."}
+                    </p>
                   </div>
-                  <span className="shrink-0 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400">
-                    {win.statusLabel}
-                  </span>
                 </div>
-              ))}
+                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                  hasSession
+                    ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
+                    : "border-border/40 bg-muted/30 text-muted-foreground/60"
+                }`}>
+                  {hasSession ? "Done" : "Pending"}
+                </span>
+              </div>
+
+              {/* Step 2: Channels connected */}
+              <div className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/60 p-4 transition-colors hover:bg-background/80">
+                <div className="flex items-start gap-3">
+                  {readyCount > 0 ? (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                  ) : (
+                    <Plug className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50" />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Channels connected</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {readyCount > 0
+                        ? connectedChannels.map((c) => channelNames[c] ?? c).join(", ")
+                        : "Connect WhatsApp or Voice to send from the console."}
+                    </p>
+                  </div>
+                </div>
+                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                  readyCount > 0
+                    ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
+                    : "border-border/40 bg-muted/30 text-muted-foreground/60"
+                }`}>
+                  {readyCount > 0 ? `${readyCount} connected` : "Pending"}
+                </span>
+              </div>
+
+              {/* Step 3: Ready to close */}
+              <div className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/60 p-4 transition-colors hover:bg-background/80">
+                <div className="flex items-start gap-3">
+                  {hasSession && readyCount > 0 ? (
+                    <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                  ) : (
+                    <Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50" />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Ready to close deals</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {hasSession && readyCount > 0
+                        ? "Everything is set. Send offers, call leads, close deals."
+                        : "Complete the steps above to unlock full operations."}
+                    </p>
+                  </div>
+                </div>
+                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                  hasSession && readyCount > 0
+                    ? "border-amber-500/25 bg-amber-500/10 text-amber-400"
+                    : "border-border/40 bg-muted/30 text-muted-foreground/60"
+                }`}>
+                  {hasSession && readyCount > 0 ? "Ready" : "Pending"}
+                </span>
+              </div>
             </div>
+
             <div className="flex flex-col gap-2.5 pt-1">
               <Button asChild className="rounded-full">
                 <Link href="/studio">
-                  Start a chat
+                  {hasSession ? "Continue working" : "Start a chat"}
                   <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="rounded-full border-border/60">
-                <Link href="/connect">Connect accounts</Link>
-              </Button>
+              {readyCount === 0 && (
+                <Button asChild variant="outline" className="rounded-full border-border/60">
+                  <Link href="/connect">Connect accounts</Link>
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

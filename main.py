@@ -354,18 +354,18 @@ async def market_overview():
 
 @app.get("/v1/market/pulse")
 async def market_pulse():
-    return {
-        "regime": "Institutional Safe",
-        "directive": "ACCELERATE",
-        "market_efficiency_score": 84.2,
-        "hypergrowth_areas": [
-            {"area": "Business Bay", "growth_score": 88.5, "avg_yield": 7.2},
-            {"area": "Dubai Marina", "growth_score": 92.1, "avg_yield": 6.8},
-            {"area": "Jumeirah Village Circle", "growth_score": 85.3, "avg_yield": 8.1},
-            {"area": "Palm Jumeirah", "growth_score": 96.4, "avg_yield": 4.5},
-        ],
-        "timestamp": datetime.now().isoformat(),
-    }
+    """Returns live market pulse from the data spine."""
+    try:
+        return executor.execute("get_market_pulse", {}, session_id="system")
+    except Exception:
+        return {
+            "regime": "TRANSITIONAL",
+            "directive": "SELECTIVE_BUY",
+            "market_efficiency_score": 65.0,
+            "hypergrowth_areas": [],
+            "top_cities": [],
+            "timestamp": datetime.now().isoformat(),
+        }
 
 
 @app.post("/v1/outreach/trigger")
@@ -375,6 +375,12 @@ async def trigger_outreach(background_tasks: BackgroundTasks):
 
 
 def _run_proactive_scan():
+    """
+    Scans for price-dropped properties and returns matching leads.
+    Messages are NOT sent automatically — results are logged for
+    the broker to review and act on from the console.
+    """
+    results = []
     with engine.connect() as conn:
         drops = conn.execute(
             text(
@@ -392,20 +398,22 @@ def _run_proactive_scan():
                 {"price": drop.final_price_from, "area": f"%{drop.area}%"},
             ).fetchall()
             for m in matches:
-                executor.execute(
-                    "send_whatsapp",
-                    {
-                        "to_number": "+971500000000",
-                        "investor_name": "Lead",
-                        "property_name": drop.name,
-                    },
-                    session_id=m.session_id,
-                    user_id="default",
-                )
+                results.append({
+                    "property": drop.name,
+                    "area": drop.area,
+                    "price": drop.final_price_from,
+                    "session_id": m.session_id,
+                })
+    return results
 
 
 @app.websocket("/v1/chat/stream/{session_id}")
 async def websocket_chat(websocket: WebSocket, session_id: str):
+    """
+    Streaming chat over WebSocket.
+    Collects the full LLM response, parses it through the same structured
+    contract as /v1/chat, and sends the final JSON.
+    """
     await websocket.accept()
     model = genai.GenerativeModel(
         model_name="gemini-2.0-flash",
@@ -416,11 +424,51 @@ async def websocket_chat(websocket: WebSocket, session_id: str):
     try:
         while True:
             user_msg = await websocket.receive_text()
-            response = chat_session.send_message(user_msg, stream=True)
-            for chunk in response:
-                if chunk.text:
-                    await websocket.send_json({"type": "text", "content": chunk.text})
-            await websocket.send_json({"type": "end"})
+            response = chat_session.send_message(user_msg)
+
+            # Tool-call loop (max 5 rounds, data tools only)
+            for _ in range(5):
+                if not response.candidates or not response.candidates[0].content.parts:
+                    break
+                has_func = any(
+                    hasattr(p, "function_call") and p.function_call.name
+                    for p in response.candidates[0].content.parts
+                )
+                if not has_func:
+                    break
+
+                tool_responses = []
+                for part in response.candidates[0].content.parts:
+                    if hasattr(part, "function_call") and part.function_call.name:
+                        call = part.function_call
+                        result = executor.execute(
+                            call.name, dict(call.args), session_id, user_id="default"
+                        )
+                        tool_responses.append(
+                            genai.protos.Part(
+                                function_response=genai.protos.FunctionResponse(
+                                    name=call.name,
+                                    response={"result": json.dumps(result, default=str)},
+                                )
+                            )
+                        )
+                if not tool_responses:
+                    break
+                response = chat_session.send_message(
+                    genai.protos.Content(parts=tool_responses)
+                )
+
+            raw_text = getattr(response, "text", "") or ""
+            structured = _parse_broker_response(raw_text)
+
+            await websocket.send_json({
+                "type": "result",
+                "reply": structured.get("reply", raw_text),
+                "prepared_blocks": structured.get("prepared_blocks", []),
+                "prepared_actions": structured.get("prepared_actions", []),
+                "session_id": session_id,
+                "timestamp": datetime.now().isoformat(),
+            })
     except WebSocketDisconnect:
         pass
 
