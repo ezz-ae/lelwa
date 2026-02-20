@@ -175,8 +175,8 @@ export default function ActivatePage() {
               {step === 3 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="font-display text-2xl text-foreground">Your plan</h2>
-                    <p className="mt-2 text-sm text-muted-foreground">Lelwa will create your account now.</p>
+                    <h2 className="font-display text-2xl text-foreground">Ready to start</h2>
+                    <p className="mt-2 text-sm text-muted-foreground">Your setup is saved. Open the console to begin.</p>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <Card className="border-border/60 bg-gradient-to-br from-white/10 via-white/5 to-transparent">

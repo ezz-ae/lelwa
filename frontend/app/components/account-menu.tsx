@@ -69,7 +69,7 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-foreground">Lelwa User</p>
-              <p className="truncate text-[11px] text-muted-foreground">Pro Plan · Dubai</p>
+              <p className="truncate text-[11px] text-muted-foreground">Active · Dubai</p>
             </div>
           </div>
         </div>

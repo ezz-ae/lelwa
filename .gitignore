@@ -31,5 +31,8 @@ lelwa.com  Full project backend  .yaml
 terra-landing-page.zip
 perplexity-ai-clone-chat-ui-design.zip
 
+# Channel credential store (contains API keys — never commit)
+channel_store.json
+
 # OS
 .DS_Store

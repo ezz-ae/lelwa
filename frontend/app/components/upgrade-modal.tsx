@@ -26,12 +26,12 @@ const packages = [
   },
   {
     name: "Lelwa Closer",
-    tagline: "For deal-focused agents",
+    tagline: "For deal-focused brokers",
     actions: ["Call Leads", "Create Offer", "Create Contract"],
     features: [
-      "AI phone calls to warm leads",
-      "Generate offer packs in seconds",
-      "Draft contracts ready to sign",
+      "Voice calls to warm leads",
+      "Offer packs prepared in seconds",
+      "Contracts drafted, ready to send",
       "Up to 200 leads / month",
       "Priority support",
     ],
@@ -45,7 +45,7 @@ const packages = [
     features: [
       "Everything in Closer",
       "Team activity dashboard",
-      "Multi-agent routing",
+      "Multi-desk routing",
       "Unlimited leads",
       "Dedicated account manager",
     ],
