@@ -1,8 +1,7 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Cloud, ArrowUpRight } from "lucide-react"
+import { Cloud, TrendingUp } from "lucide-react"
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
@@ -24,14 +23,12 @@ export function WidgetCards() {
   const hourAngle = (((hours % 12) + minutes / 60) / 12) * 360
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
+    <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 grid grid-cols-1 gap-3 sm:grid-cols-3 md:gap-4">
       {/* Clock Widget */}
       <div className="group relative overflow-hidden rounded-3xl border border-border/50 bg-card p-5 shadow-sm transition-all hover:shadow-lg hover:shadow-black/10">
         <div className="flex flex-col items-center justify-center space-y-3">
-          {/* Analog Clock */}
           <div className="relative h-36 w-36">
             <svg className="h-full w-full" viewBox="0 0 200 200">
-              {/* Clock face ring */}
               <circle
                 cx="100"
                 cy="100"
@@ -41,8 +38,6 @@ export function WidgetCards() {
                 strokeWidth="1"
                 className="text-border/30"
               />
-
-              {/* Hour Markers */}
               {[...Array(12)].map((_, i) => {
                 const angle = (i * 30 - 90) * (Math.PI / 180)
                 const isMain = i % 3 === 0
@@ -66,8 +61,6 @@ export function WidgetCards() {
                   />
                 )
               })}
-
-              {/* Hour Hand */}
               <line
                 x1="100"
                 y1="100"
@@ -78,8 +71,6 @@ export function WidgetCards() {
                 strokeLinecap="round"
                 className="text-foreground"
               />
-
-              {/* Minute Hand */}
               <line
                 x1="100"
                 y1="100"
@@ -90,8 +81,6 @@ export function WidgetCards() {
                 strokeLinecap="round"
                 className="text-foreground"
               />
-
-              {/* Second Hand with counterbalance */}
               <line
                 x1={100 - Math.cos((secondAngle - 90) * (Math.PI / 180)) * 16}
                 y1={100 - Math.sin((secondAngle - 90) * (Math.PI / 180)) * 16}
@@ -102,13 +91,10 @@ export function WidgetCards() {
                 strokeLinecap="round"
                 className="text-orange-500"
               />
-
-              {/* Center dot */}
               <circle cx="100" cy="100" r="5" fill="currentColor" className="text-foreground" />
               <circle cx="100" cy="100" r="2.5" fill="currentColor" className="text-orange-500" />
             </svg>
           </div>
-
           <div className="text-center">
             <div className="text-base font-medium text-foreground">Dubai</div>
             <div className="text-xs text-muted-foreground">
@@ -119,25 +105,6 @@ export function WidgetCards() {
         </div>
       </div>
 
-      {/* CTA Widget */}
-      <Link
-        href="/studio"
-        className="group relative overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20"
-      >
-        <img
-          src="/lelwa-palette.jpeg"
-          alt="Lelwa palette"
-          className="absolute inset-0 h-full w-full object-cover opacity-50 transition-opacity group-hover:opacity-60"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-        <div className="relative flex h-full flex-col justify-between">
-          <ArrowUpRight className="ml-auto h-4 w-4 text-white/60 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white" />
-          <div className="mt-auto font-mono text-sm font-medium uppercase tracking-wider text-white">
-            Start a market brief
-          </div>
-        </div>
-      </Link>
-
       {/* Yield Widget */}
       <div className="group relative overflow-hidden rounded-3xl border border-border/50 bg-card p-5 shadow-sm transition-all hover:shadow-lg hover:shadow-black/10">
         <div className="space-y-3">
@@ -147,11 +114,11 @@ export function WidgetCards() {
               <div className="text-xs text-muted-foreground">Dubai Marina</div>
             </div>
             <div className="flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400">
-              ↗ 1.4%
+              <TrendingUp className="h-3 w-3" />
+              1.4%
             </div>
           </div>
 
-          {/* Sparkline chart with area fill */}
           <div className="h-16">
             <svg className="h-full w-full" viewBox="0 0 300 64" preserveAspectRatio="none">
               <defs>
