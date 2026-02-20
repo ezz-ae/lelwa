@@ -6,25 +6,25 @@ import { usePathname } from "next/navigation"
 import Image from "next/image"
 import { ArrowUpFromDot, CheckCircle2, Home, MessageSquare, Plus, Plug } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { UpgradeModal } from "./upgrade-modal"
 import { AccountMenu } from "./account-menu"
+import { UpgradeModal } from "./upgrade-modal"
 
 const navItems = [
   { id: "home", label: "Home", href: "/", icon: Home },
-  { id: "studio", label: "Chat", href: "/studio", icon: MessageSquare },
-  { id: "results", label: "Results", href: "/briefing", icon: CheckCircle2 },
+  { id: "studio", label: "Console", href: "/studio", icon: MessageSquare },
+  { id: "briefing", label: "Results", href: "/briefing", icon: CheckCircle2 },
   { id: "connect", label: "Connect", href: "/connect", icon: Plug },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [showAccountMenu, setShowAccountMenu] = useState(false)
+  const [showUpgrade, setShowUpgrade] = useState(false)
 
   return (
     <>
       <aside className="flex h-screen w-[88px] shrink-0 flex-col items-center border-r border-border/60 bg-background py-4">
-        {/* Logo + New chat */}
+        {/* Logo + New */}
         <div className="flex flex-col items-center gap-3">
           <Link
             href="/"
@@ -37,18 +37,19 @@ export function Sidebar() {
           <button
             type="button"
             onClick={() => {
-              // Generate a fresh session so the studio starts clean
+              const oldId = window.localStorage.getItem("lelwa_session_id")
+              if (oldId) window.localStorage.removeItem(`lelwa_feed_${oldId}`)
               const freshId = `lelwa_${crypto.randomUUID()}`
               window.localStorage.setItem("lelwa_session_id", freshId)
               window.location.href = "/studio"
             }}
             className="flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-            aria-label="New chat"
+            aria-label="New session"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-muted/30">
               <Plus className="h-4 w-4" />
             </div>
-            <span>New chat</span>
+            <span>New</span>
           </button>
         </div>
 
@@ -83,6 +84,18 @@ export function Sidebar() {
         <div className="flex flex-col items-center gap-2 pb-2">
           <button
             type="button"
+            onClick={() => setShowUpgrade(true)}
+            className="flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+            aria-label="Packages"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10">
+              <ArrowUpFromDot className="h-4 w-4 text-amber-400" />
+            </div>
+            <span>Packages</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setShowAccountMenu(!showAccountMenu)}
             className="flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
           >
@@ -91,20 +104,11 @@ export function Sidebar() {
             </span>
             <span>Account</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => setShowUpgradeModal(true)}
-            className="flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-          >
-            <ArrowUpFromDot className="h-5 w-5" />
-            <span>Packages</span>
-          </button>
         </div>
       </aside>
 
       <AccountMenu isOpen={showAccountMenu} onClose={() => setShowAccountMenu(false)} />
-      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+      <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
     </>
   )
 }

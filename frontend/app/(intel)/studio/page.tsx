@@ -62,6 +62,22 @@ interface FeedEntry {
   prepared_blocks?: PreparedBlock[]
   prepared_actions?: PreparedAction[]
   actionState?: Record<string, "idle" | "loading" | "done" | "error" | "confirm">
+  actionResults?: Record<string, { pdf_url?: string }>
+}
+
+const REQUIRED_ARGS_BY_TOOL: Record<string, string[]> = {
+  send_whatsapp: ["to_number"],
+  call_investor: ["to_number"],
+}
+
+function isActionBlocked(action: PreparedAction) {
+  const required = REQUIRED_ARGS_BY_TOOL[action.tool_name]
+  if (!required) return false
+  return required.some((key) => {
+    const value = action.args?.[key]
+    if (typeof value === "string") return value.trim().length === 0
+    return value == null
+  })
 }
 
 // ── Block config ───────────────────────────────────────────────────────────
@@ -117,13 +133,33 @@ function BlockCard({ block }: { block: PreparedBlock }) {
 
 function ActionButton({
   action, state, onExecute, onConfirm, onConnect,
+  blocked,
 }: {
   action: PreparedAction
   state: "idle" | "loading" | "done" | "error" | "confirm"
   onExecute: () => void
   onConfirm: () => void
   onConnect: () => void
+  blocked: boolean
 }) {
+  if (blocked) {
+    return (
+      <div className="flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/80">
+        <span>{action.label}</span>
+        <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-amber-400/80">
+          Needs number
+        </span>
+      </div>
+    )
+  }
+  if (state === "error") return (
+    <div className="flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive/80">
+      <span>{action.label}</span>
+      <span className="rounded-full border border-destructive/40 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-destructive/70">
+        Failed
+      </span>
+    </div>
+  )
   if (state === "done") return (
     <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400">
       <Check className="h-3 w-3" /> {action.label}
@@ -131,10 +167,10 @@ function ActionButton({
   )
   if (state === "confirm") return (
     <div className="flex items-center gap-1.5">
-      <span className="text-xs text-muted-foreground">Confirm?</span>
+      <span className="text-xs text-muted-foreground">Confirm</span>
       <button type="button" onClick={onConfirm}
         className="rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-400 transition hover:bg-amber-500/25">
-        Yes, proceed
+        Confirm
       </button>
     </div>
   )
@@ -164,6 +200,7 @@ function WorkCard({ entry, onActionClick, onConfirmAction, onConnectRequired }: 
   const blocks = entry.prepared_blocks ?? []
   const actions = entry.prepared_actions ?? []
   const states = entry.actionState ?? {}
+  const results = entry.actionResults ?? {}
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -176,20 +213,32 @@ function WorkCard({ entry, onActionClick, onConfirmAction, onConnectRequired }: 
       {actions.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {actions.map((action) => (
-            <ActionButton
-              key={action.id}
-              action={action}
-              state={states[action.id] ?? "idle"}
-              onExecute={() => {
-                if (action.requires === "confirmation" && states[action.id] !== "confirm") {
-                  onActionClick(entry.id, action)
-                } else {
-                  onConfirmAction(entry.id, action.id)
-                }
-              }}
-              onConfirm={() => onConfirmAction(entry.id, action.id)}
-              onConnect={() => onConnectRequired(entry.id, action)}
-            />
+            <div key={action.id} className="flex flex-col gap-1">
+              <ActionButton
+                action={action}
+                state={states[action.id] ?? "idle"}
+                blocked={isActionBlocked(action)}
+                onExecute={() => {
+                  if (action.requires === "confirmation" && states[action.id] !== "confirm") {
+                    onActionClick(entry.id, action)
+                  } else {
+                    onConfirmAction(entry.id, action.id)
+                  }
+                }}
+                onConfirm={() => onConfirmAction(entry.id, action.id)}
+                onConnect={() => onConnectRequired(entry.id, action)}
+              />
+              {states[action.id] === "done" && results[action.id]?.pdf_url && (
+                <a
+                  href={results[action.id].pdf_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-400 transition hover:bg-amber-500/20"
+                >
+                  ↓ Download PDF
+                </a>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -210,6 +259,7 @@ export default function StudioPage() {
   const [feed, setFeed] = useState<FeedEntry[]>([])
   const [activeTools, setActiveTools] = useState<string[]>([])
   const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [healthStatus, setHealthStatus] = useState<"unknown" | "done" | "unavailable">("unknown")
 
   // Connect sheet state — includes resume_token for automatic retry
   const [connectSheet, setConnectSheet] = useState<{
@@ -232,12 +282,50 @@ export default function StudioPage() {
   useEffect(() => { feedEndRef.current?.scrollIntoView({ behavior: "smooth" }) }, [feed, isSending])
 
   useEffect(() => {
+    let cancelled = false
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${apiBase}/health`, { cache: "no-store" })
+        if (!cancelled) setHealthStatus(res.ok ? "done" : "unavailable")
+      } catch {
+        if (!cancelled) setHealthStatus("unavailable")
+      }
+    }
+    checkHealth()
+    const timer = window.setInterval(checkHealth, 30000)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [apiBase])
+
+  // Session init + feed hydration from localStorage
+  useEffect(() => {
     const stored = window.localStorage.getItem("lelwa_session_id")
-    if (stored) { setSessionId(stored); return }
-    const id = `lelwa_${crypto.randomUUID()}`
-    window.localStorage.setItem("lelwa_session_id", id)
-    setSessionId(id)
+    const activeId = stored ?? `lelwa_${crypto.randomUUID()}`
+    if (!stored) window.localStorage.setItem("lelwa_session_id", activeId)
+    setSessionId(activeId)
+
+    // Restore feed for this session (survives page refresh)
+    try {
+      const raw = window.localStorage.getItem(`lelwa_feed_${activeId}`)
+      if (raw) {
+        const parsed = JSON.parse(raw) as FeedEntry[]
+        // Rehydrate Date objects (JSON serialises them as strings)
+        setFeed(parsed.map((e) => ({ ...e, timestamp: new Date(e.timestamp) })))
+      }
+    } catch { /* ignore malformed storage */ }
   }, [])
+
+  // Persist feed to localStorage whenever it changes
+  useEffect(() => {
+    if (!sessionId || feed.length === 0) return
+    try {
+      // Keep only the last 50 entries to cap storage usage
+      const toStore = feed.slice(-50)
+      window.localStorage.setItem(`lelwa_feed_${sessionId}`, JSON.stringify(toStore))
+    } catch { /* quota exceeded — skip */ }
+  }, [feed, sessionId])
 
   useEffect(() => {
     const s = window.localStorage.getItem("lelwa_strategy_actions")
@@ -255,7 +343,7 @@ export default function StudioPage() {
 
   // ── Action state helpers ───────────────────────────────────────
 
-  function setActionState(entryId: string, actionId: string, state: FeedEntry["actionState"] extends Record<string, infer S> ? S : never) {
+  function setActionState(entryId: string, actionId: string, state: "idle" | "loading" | "done" | "error" | "confirm") {
     setFeed((prev) => prev.map((e) =>
       e.id === entryId ? { ...e, actionState: { ...(e.actionState ?? {}), [actionId]: state } } : e
     ))
@@ -301,10 +389,27 @@ export default function StudioPage() {
         return
       }
 
+      // Application-level error (e.g. Twilio rejected, invalid credentials)
+      if (data?.error) {
+        setActionState(entryId, action.id, "error")
+        setTimeout(() => setActionState(entryId, action.id, "idle"), 5000)
+        return
+      }
+
+      // Store any PDF URL returned by document generation tools
+      if (data?.pdf_url) {
+        setFeed((prev) => prev.map((e) =>
+          e.id === entryId
+            ? { ...e, actionResults: { ...(e.actionResults ?? {}), [action.id]: { pdf_url: data.pdf_url } } }
+            : e
+        ))
+      }
+
       setActionState(entryId, action.id, "done")
     } catch {
+      // Network-level error
       setActionState(entryId, action.id, "error")
-      setTimeout(() => setActionState(entryId, action.id, "idle"), 3000)
+      setTimeout(() => setActionState(entryId, action.id, "idle"), 5000)
     }
   }
 
@@ -392,7 +497,7 @@ export default function StudioPage() {
           id: (Date.now() + 1).toString(),
           type: "work",
           timestamp: new Date(),
-          reply: "Could not reach Lelwa. Check your connection and try again.",
+          reply: "Connection error. Check your network and try again.",
           prepared_blocks: [],
           prepared_actions: [],
           actionState: {},
@@ -428,7 +533,7 @@ export default function StudioPage() {
                 setInput(e.target.value)
                 const el = e.target; el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 200)}px`
               }}
-              placeholder="Drop the lead, listing, or request."
+              placeholder="Lead, listing, or request."
               className="min-h-[48px] max-h-[200px] flex-1 resize-none border-none bg-transparent px-0 py-2 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0"
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSend() } }}
               disabled={isSending}
@@ -482,11 +587,6 @@ export default function StudioPage() {
           />
         </div>
       </div>
-      <p className="mt-2 text-center text-[11px] text-muted-foreground/50">
-        Press{" "}
-        <kbd className="rounded border border-border/50 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px]">⌘ Enter</kbd>{" "}
-        to send
-      </p>
     </div>
   )
 
@@ -499,7 +599,13 @@ export default function StudioPage() {
       <div className="relative">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(120,120,120,0.12),transparent_70%)]" />
         <div className="rounded-[32px] p-[1px]" style={{ background: `linear-gradient(135deg, ${activeTheme.glow[0]}, ${activeTheme.glow[1]})` }}>
-          <div className="rounded-[31px] border border-border/60 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 md:p-8">
+          <div className="relative rounded-[31px] border border-border/60 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 md:p-8">
+            <div className="absolute right-6 top-6 z-10 flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1 text-[10px] font-medium text-muted-foreground/80">
+              <span className="uppercase tracking-[0.18em]">Activity</span>
+              <span className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70">
+                {healthStatus === "done" ? "Done" : "Unavailable"}
+              </span>
+            </div>
             {hasFeed ? (
               <div className="flex min-h-[70vh] flex-col gap-4">
                 {/* Header */}
@@ -585,7 +691,7 @@ export default function StudioPage() {
                   <div>
                     <h1 className="font-display text-3xl text-foreground">Lelwa</h1>
                     <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                      Drop a lead, listing, or request. Lelwa prepares the reply, script, and offer — ready to send.
+                      Submit a lead, property reference, or request.
                     </p>
                   </div>
                   {activeTools.length > 0 && (
@@ -614,7 +720,7 @@ export default function StudioPage() {
       <ConnectSheet
         isOpen={connectSheet.open}
         channel={connectSheet.requirement?.channel ?? ""}
-        prompt={connectSheet.requirement?.prompt ?? "Connect your account to continue."}
+        prompt={connectSheet.requirement?.prompt ?? "Not connected."}
         fields={connectSheet.requirement?.fields ?? []}
         resumeToken={connectSheet.requirement?.resume_token}
         onClose={() => setConnectSheet({ open: false, entryId: "", action: null, requirement: null })}
