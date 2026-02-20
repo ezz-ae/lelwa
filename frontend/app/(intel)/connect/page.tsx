@@ -50,39 +50,46 @@ export default function ConnectPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Channels</p>
           <h2 className="font-display text-3xl text-foreground">Configure outreach channels</h2>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Credentials are stored once. All outreach — messages, calls, listings — executes from the console.
+            Connect each channel once. Credentials are stored locally and never shared.
           </p>
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
           {CHANNELS.map((ch) => {
             const isConnected = connected.has(ch.id)
+            const isUnavailable = ch.status === "unavailable"
+            const canConnect = !isUnavailable && ch.fields.length > 0
+            const statusLabel = isConnected ? "Done" : isUnavailable ? "Unavailable" : "Not connected"
 
             return (
               <Card
                 key={ch.id}
-                className={`border bg-gradient-to-br from-white/10 via-white/5 to-transparent transition-colors hover:bg-white/[0.07] ${ch.accentColor} ${ch.isRecommended ? ch.bgAccent : ""}`}
+                className={`border bg-gradient-to-br from-white/10 via-white/5 to-transparent transition-colors hover:bg-white/[0.07] ${ch.accentColor} ${ch.bgAccent}`}
               >
                 <CardContent className="flex items-center justify-between gap-4 py-4">
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-sm font-bold ${ch.iconColor}`}>
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-sm font-bold ${ch.iconColor} ${isUnavailable ? "opacity-40" : ""}`}>
                       {ch.iconLabel}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-sm font-semibold text-foreground">{ch.title}</h3>
-                        {isConnected && (
-                          <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 py-0 text-[10px] text-emerald-400">
-                            Connected
-                          </Badge>
-                        )}
-                        {!isConnected && ch.isRecommended && (
-                          <Badge variant="outline" className="border-[#25D366]/30 bg-[#25D366]/10 py-0 text-[10px] text-[#25D366]">
-                            Recommended
-                          </Badge>
-                        )}
+                        <Badge
+                          variant="outline"
+                          className={`py-0 text-[10px] ${
+                            isConnected
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                              : isUnavailable
+                                ? "text-muted-foreground/60"
+                                : "border-border/60 text-muted-foreground"
+                          }`}
+                        >
+                          {statusLabel}
+                        </Badge>
                       </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{ch.detail}</p>
+                      <p className={`mt-0.5 text-xs ${isUnavailable ? "text-muted-foreground/40" : "text-muted-foreground"}`}>
+                        {ch.detail}
+                      </p>
                     </div>
                   </div>
 
@@ -90,14 +97,23 @@ export default function ConnectPage() {
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10">
                       <Check className="h-3.5 w-3.5 text-emerald-400" />
                     </div>
-                  ) : (
+                  ) : canConnect ? (
                     <Button
                       className="shrink-0 rounded-full"
                       size="sm"
-                      variant={ch.isRecommended ? "default" : "outline"}
+                      variant="outline"
                       onClick={() => setSheet({ open: true, channel: ch })}
                     >
                       Connect
+                    </Button>
+                  ) : (
+                    <Button
+                      className="shrink-0 rounded-full opacity-40"
+                      size="sm"
+                      variant="outline"
+                      disabled
+                    >
+                      Unavailable
                     </Button>
                   )}
                 </CardContent>
@@ -114,9 +130,9 @@ export default function ConnectPage() {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Next</p>
-                <h3 className="text-base font-semibold text-foreground">Open the console</h3>
+                <h3 className="text-base font-semibold text-foreground">Open console</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Submit a lead or property reference. Lelwa returns the reply, call script, and offer documentation.
+                  Submit a lead. Execute reply, call, or offer from the console.
                 </p>
               </div>
             </div>
@@ -133,7 +149,7 @@ export default function ConnectPage() {
       <ConnectSheet
         isOpen={sheet.open}
         channel={sheet.channel?.channel ?? ""}
-        prompt={sheet.channel?.prompt ?? "Connect your account."}
+        prompt={sheet.channel?.prompt ?? "Not connected."}
         fields={sheet.channel?.fields ?? []}
         onClose={() => setSheet({ open: false, channel: null })}
         onConnected={handleConnected}
