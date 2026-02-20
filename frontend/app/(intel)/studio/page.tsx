@@ -147,7 +147,7 @@ function ActionButton({
       <div className="flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/80">
         <span>{action.label}</span>
         <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-amber-400/80">
-          Needs number
+          Unavailable
         </span>
       </div>
     )
@@ -156,7 +156,7 @@ function ActionButton({
     <div className="flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive/80">
       <span>{action.label}</span>
       <span className="rounded-full border border-destructive/40 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-destructive/70">
-        Failed
+        Unavailable
       </span>
     </div>
   )
@@ -167,10 +167,10 @@ function ActionButton({
   )
   if (state === "confirm") return (
     <div className="flex items-center gap-1.5">
-      <span className="text-xs text-muted-foreground">Confirm?</span>
+      <span className="text-xs text-muted-foreground">Confirm</span>
       <button type="button" onClick={onConfirm}
         className="rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-400 transition hover:bg-amber-500/25">
-        Yes, proceed
+        Confirm
       </button>
     </div>
   )
@@ -497,7 +497,7 @@ export default function StudioPage() {
           id: (Date.now() + 1).toString(),
           type: "work",
           timestamp: new Date(),
-          reply: "Unavailable.",
+          reply: "Connection error. Check your network and try again.",
           prepared_blocks: [],
           prepared_actions: [],
           actionState: {},
@@ -691,7 +691,7 @@ export default function StudioPage() {
                   <div>
                     <h1 className="font-display text-3xl text-foreground">Lelwa</h1>
                     <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                      Lead, Listing, or Property. Reply, Call Script, Offer.
+                      Submit a lead, property reference, or request.
                     </p>
                   </div>
                   {activeTools.length > 0 && (
