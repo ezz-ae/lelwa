@@ -3,10 +3,51 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle2, Home, MessageSquare, Sparkles, UserCircle2 } from "lucide-react"
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Home,
+  MessageSquare,
+  Sparkles,
+  UserCircle2,
+  Zap,
+  Users,
+  TrendingUp,
+} from "lucide-react"
 import { primaryActions } from "@/lib/lelwa-actions"
 
-const packages = ["Lelwa Core", "Lelwa Closer", "Lelwa Team"]
+const packages = [
+  {
+    name: "Lelwa Core",
+    description: "Auto-reply, ad copy, and listing refresh for solo agents.",
+    icon: Zap,
+    iconColor: "text-amber-400",
+    iconBg: "bg-amber-500/10",
+    cta: "Start with Core",
+    href: "/activate",
+    recommended: false,
+  },
+  {
+    name: "Lelwa Closer",
+    description: "AI calls, offer packs, and contracts — everything to close faster.",
+    icon: TrendingUp,
+    iconColor: "text-violet-400",
+    iconBg: "bg-violet-500/10",
+    cta: "Start with Closer",
+    href: "/activate",
+    recommended: true,
+  },
+  {
+    name: "Lelwa Team",
+    description: "Multi-agent routing, activity dashboards, and unlimited leads.",
+    icon: Users,
+    iconColor: "text-sky-400",
+    iconBg: "bg-sky-500/10",
+    cta: "Contact Sales",
+    href: "/activate",
+    recommended: false,
+  },
+]
 
 const railLinks = [
   { href: "/", icon: Home, label: "Home" },
@@ -19,6 +60,7 @@ export default function MarketingLanding() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="grid min-h-screen md:grid-cols-[88px_1fr]">
+        {/* Left rail */}
         <aside className="hidden h-full flex-col items-center gap-6 border-r border-sidebar-border bg-sidebar py-6 md:flex">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/50 text-foreground">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -47,10 +89,12 @@ export default function MarketingLanding() {
           </Link>
         </aside>
 
+        {/* Main content */}
         <main className="px-5 py-6 md:px-10">
           <div className="relative h-full min-h-[92vh] rounded-[36px] border border-border/60 bg-gradient-to-br from-[#1A1B20] via-[#13151B] to-[#0D0F14] p-6 shadow-2xl shadow-black/40 md:p-10">
             <div className="pointer-events-none absolute inset-0 rounded-[36px] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.1),_transparent_55%)]" />
 
+            {/* Header */}
             <header className="relative z-10 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted/60">
@@ -70,9 +114,14 @@ export default function MarketingLanding() {
               </div>
             </header>
 
+            {/* Hero section */}
             <section className="relative z-10 mt-10 flex flex-col items-center text-center">
               <h1 className="font-display text-3xl md:text-4xl text-foreground">How would you like to start?</h1>
+              <p className="mt-3 max-w-md text-sm text-muted-foreground">
+                Pick an action and Lelwa sets up your workspace instantly.
+              </p>
 
+              {/* Action tiles */}
               <div className="mt-8 grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
                 {primaryActions.map((tile) => {
                   const Icon = tile.icon
@@ -106,7 +155,8 @@ export default function MarketingLanding() {
                 })}
               </div>
 
-              <div className="mt-8 flex w-full flex-wrap items-center justify-center gap-2">
+              {/* Action chips row */}
+              <div className="mt-6 flex w-full flex-wrap items-center justify-center gap-2">
                 {primaryActions.map((action) => (
                   <Link
                     key={action.id}
@@ -122,18 +172,54 @@ export default function MarketingLanding() {
                 ))}
               </div>
 
-              <div className="mt-10 grid w-full gap-3 md:grid-cols-3">
-                {packages.map((pack) => (
-                  <Card
-                    key={pack}
-                    className="border border-border/60 bg-gradient-to-br from-white/10 via-white/5 to-transparent"
-                  >
-                    <CardContent className="flex items-center justify-between gap-4 p-4">
-                      <p className="text-sm font-semibold text-foreground">{pack}</p>
-                      <div className="h-8 w-8 rounded-full border border-border/60 bg-muted/30" />
-                    </CardContent>
-                  </Card>
-                ))}
+              {/* Plans section */}
+              <div className="mt-10 w-full">
+                <p className="mb-4 text-xs uppercase tracking-[0.2em] text-muted-foreground/70">Plans</p>
+                <div className="grid w-full gap-3 md:grid-cols-3">
+                  {packages.map((pack) => {
+                    const Icon = pack.icon
+                    return (
+                      <Card
+                        key={pack.name}
+                        className={`relative border bg-gradient-to-br from-white/10 via-white/5 to-transparent transition-all hover:from-white/[0.12] ${
+                          pack.recommended ? "border-violet-500/30" : "border-border/60"
+                        }`}
+                      >
+                        {pack.recommended && (
+                          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                            <span className="rounded-full border border-violet-500/40 bg-gradient-to-r from-violet-600 to-indigo-600 px-2.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+                              Popular
+                            </span>
+                          </div>
+                        )}
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${pack.iconBg}`}
+                            >
+                              <Icon className={`h-4 w-4 ${pack.iconColor}`} />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <p className="text-sm font-semibold text-foreground">{pack.name}</p>
+                              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{pack.description}</p>
+                            </div>
+                            <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+                          </div>
+                          <div className="mt-4">
+                            <Button
+                              asChild
+                              size="sm"
+                              className="w-full rounded-full"
+                              variant={pack.recommended ? "default" : "outline"}
+                            >
+                              <Link href={pack.href}>{pack.cta}</Link>
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
               </div>
             </section>
           </div>
