@@ -64,6 +64,21 @@ interface FeedEntry {
   actionState?: Record<string, "idle" | "loading" | "done" | "error" | "confirm">
 }
 
+const REQUIRED_ARGS_BY_TOOL: Record<string, string[]> = {
+  send_whatsapp: ["to_number"],
+  call_investor: ["to_number"],
+}
+
+function isActionBlocked(action: PreparedAction) {
+  const required = REQUIRED_ARGS_BY_TOOL[action.tool_name]
+  if (!required) return false
+  return required.some((key) => {
+    const value = action.args?.[key]
+    if (typeof value === "string") return value.trim().length === 0
+    return value == null
+  })
+}
+
 // ── Block config ───────────────────────────────────────────────────────────
 
 const BLOCK_CFG: Record<
@@ -117,13 +132,27 @@ function BlockCard({ block }: { block: PreparedBlock }) {
 
 function ActionButton({
   action, state, onExecute, onConfirm, onConnect,
+  blocked,
 }: {
   action: PreparedAction
   state: "idle" | "loading" | "done" | "error" | "confirm"
   onExecute: () => void
   onConfirm: () => void
   onConnect: () => void
+  blocked: boolean
 }) {
+  if (blocked) {
+    return (
+      <div className="flex items-center gap-1.5 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/70">
+        Needs phone number
+      </div>
+    )
+  }
+  if (state === "error") return (
+    <div className="flex items-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive">
+      <X className="h-3 w-3" /> Failed — check channel credentials
+    </div>
+  )
   if (state === "done") return (
     <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400">
       <Check className="h-3 w-3" /> {action.label}
@@ -180,6 +209,7 @@ function WorkCard({ entry, onActionClick, onConfirmAction, onConnectRequired }: 
               key={action.id}
               action={action}
               state={states[action.id] ?? "idle"}
+              blocked={isActionBlocked(action)}
               onExecute={() => {
                 if (action.requires === "confirmation" && states[action.id] !== "confirm") {
                   onActionClick(entry.id, action)
@@ -301,10 +331,18 @@ export default function StudioPage() {
         return
       }
 
+      // Application-level error (e.g. Twilio rejected, invalid credentials)
+      if (data?.error) {
+        setActionState(entryId, action.id, "error")
+        setTimeout(() => setActionState(entryId, action.id, "idle"), 5000)
+        return
+      }
+
       setActionState(entryId, action.id, "done")
     } catch {
+      // Network-level error
       setActionState(entryId, action.id, "error")
-      setTimeout(() => setActionState(entryId, action.id, "idle"), 3000)
+      setTimeout(() => setActionState(entryId, action.id, "idle"), 5000)
     }
   }
 
@@ -392,7 +430,7 @@ export default function StudioPage() {
           id: (Date.now() + 1).toString(),
           type: "work",
           timestamp: new Date(),
-          reply: "Could not reach Lelwa. Check your connection and try again.",
+          reply: "Unavailable.",
           prepared_blocks: [],
           prepared_actions: [],
           actionState: {},
@@ -428,7 +466,7 @@ export default function StudioPage() {
                 setInput(e.target.value)
                 const el = e.target; el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 200)}px`
               }}
-              placeholder="Drop the lead, listing, or request."
+              placeholder="Lead, listing, or request."
               className="min-h-[48px] max-h-[200px] flex-1 resize-none border-none bg-transparent px-0 py-2 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0"
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSend() } }}
               disabled={isSending}
@@ -483,9 +521,8 @@ export default function StudioPage() {
         </div>
       </div>
       <p className="mt-2 text-center text-[11px] text-muted-foreground/50">
-        Press{" "}
         <kbd className="rounded border border-border/50 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px]">⌘ Enter</kbd>{" "}
-        to send
+        to submit
       </p>
     </div>
   )
@@ -585,7 +622,7 @@ export default function StudioPage() {
                   <div>
                     <h1 className="font-display text-3xl text-foreground">Lelwa</h1>
                     <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                      Drop a lead, listing, or request. Lelwa prepares the reply, script, and offer — ready to send.
+                      Submit a lead, property reference, or request. Reply, Call Script, Offer.
                     </p>
                   </div>
                   {activeTools.length > 0 && (
@@ -614,7 +651,7 @@ export default function StudioPage() {
       <ConnectSheet
         isOpen={connectSheet.open}
         channel={connectSheet.requirement?.channel ?? ""}
-        prompt={connectSheet.requirement?.prompt ?? "Connect your account to continue."}
+        prompt={connectSheet.requirement?.prompt ?? "Not connected."}
         fields={connectSheet.requirement?.fields ?? []}
         resumeToken={connectSheet.requirement?.resume_token}
         onClose={() => setConnectSheet({ open: false, entryId: "", action: null, requirement: null })}
