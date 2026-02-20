@@ -62,6 +62,7 @@ interface FeedEntry {
   prepared_blocks?: PreparedBlock[]
   prepared_actions?: PreparedAction[]
   actionState?: Record<string, "idle" | "loading" | "done" | "error" | "confirm">
+  actionResults?: Record<string, { pdf_url?: string }>
 }
 
 const REQUIRED_ARGS_BY_TOOL: Record<string, string[]> = {
@@ -143,14 +144,20 @@ function ActionButton({
 }) {
   if (blocked) {
     return (
-      <div className="flex items-center gap-1.5 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/70">
-        Needs phone number
+      <div className="flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/80">
+        <span>{action.label}</span>
+        <span className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70">
+          Unavailable
+        </span>
       </div>
     )
   }
   if (state === "error") return (
-    <div className="flex items-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive">
-      <X className="h-3 w-3" /> Failed — check channel credentials
+    <div className="flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/80">
+      <span>{action.label}</span>
+      <span className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70">
+        Unavailable
+      </span>
     </div>
   )
   if (state === "done") return (
@@ -193,6 +200,7 @@ function WorkCard({ entry, onActionClick, onConfirmAction, onConnectRequired }: 
   const blocks = entry.prepared_blocks ?? []
   const actions = entry.prepared_actions ?? []
   const states = entry.actionState ?? {}
+  const results = entry.actionResults ?? {}
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -205,21 +213,32 @@ function WorkCard({ entry, onActionClick, onConfirmAction, onConnectRequired }: 
       {actions.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {actions.map((action) => (
-            <ActionButton
-              key={action.id}
-              action={action}
-              state={states[action.id] ?? "idle"}
-              blocked={isActionBlocked(action)}
-              onExecute={() => {
-                if (action.requires === "confirmation" && states[action.id] !== "confirm") {
-                  onActionClick(entry.id, action)
-                } else {
-                  onConfirmAction(entry.id, action.id)
-                }
-              }}
-              onConfirm={() => onConfirmAction(entry.id, action.id)}
-              onConnect={() => onConnectRequired(entry.id, action)}
-            />
+            <div key={action.id} className="flex flex-col gap-1">
+              <ActionButton
+                action={action}
+                state={states[action.id] ?? "idle"}
+                blocked={isActionBlocked(action)}
+                onExecute={() => {
+                  if (action.requires === "confirmation" && states[action.id] !== "confirm") {
+                    onActionClick(entry.id, action)
+                  } else {
+                    onConfirmAction(entry.id, action.id)
+                  }
+                }}
+                onConfirm={() => onConfirmAction(entry.id, action.id)}
+                onConnect={() => onConnectRequired(entry.id, action)}
+              />
+              {states[action.id] === "done" && results[action.id]?.pdf_url && (
+                <a
+                  href={results[action.id].pdf_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-400 transition hover:bg-amber-500/20"
+                >
+                  ↓ Download PDF
+                </a>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -261,13 +280,33 @@ export default function StudioPage() {
 
   useEffect(() => { feedEndRef.current?.scrollIntoView({ behavior: "smooth" }) }, [feed, isSending])
 
+  // Session init + feed hydration from localStorage
   useEffect(() => {
     const stored = window.localStorage.getItem("lelwa_session_id")
-    if (stored) { setSessionId(stored); return }
-    const id = `lelwa_${crypto.randomUUID()}`
-    window.localStorage.setItem("lelwa_session_id", id)
-    setSessionId(id)
+    const activeId = stored ?? `lelwa_${crypto.randomUUID()}`
+    if (!stored) window.localStorage.setItem("lelwa_session_id", activeId)
+    setSessionId(activeId)
+
+    // Restore feed for this session (survives page refresh)
+    try {
+      const raw = window.localStorage.getItem(`lelwa_feed_${activeId}`)
+      if (raw) {
+        const parsed = JSON.parse(raw) as FeedEntry[]
+        // Rehydrate Date objects (JSON serialises them as strings)
+        setFeed(parsed.map((e) => ({ ...e, timestamp: new Date(e.timestamp) })))
+      }
+    } catch { /* ignore malformed storage */ }
   }, [])
+
+  // Persist feed to localStorage whenever it changes
+  useEffect(() => {
+    if (!sessionId || feed.length === 0) return
+    try {
+      // Keep only the last 50 entries to cap storage usage
+      const toStore = feed.slice(-50)
+      window.localStorage.setItem(`lelwa_feed_${sessionId}`, JSON.stringify(toStore))
+    } catch { /* quota exceeded — skip */ }
+  }, [feed, sessionId])
 
   useEffect(() => {
     const s = window.localStorage.getItem("lelwa_strategy_actions")
@@ -336,6 +375,15 @@ export default function StudioPage() {
         setActionState(entryId, action.id, "error")
         setTimeout(() => setActionState(entryId, action.id, "idle"), 5000)
         return
+      }
+
+      // Store any PDF URL returned by document generation tools
+      if (data?.pdf_url) {
+        setFeed((prev) => prev.map((e) =>
+          e.id === entryId
+            ? { ...e, actionResults: { ...(e.actionResults ?? {}), [action.id]: { pdf_url: data.pdf_url } } }
+            : e
+        ))
       }
 
       setActionState(entryId, action.id, "done")
@@ -520,10 +568,6 @@ export default function StudioPage() {
           />
         </div>
       </div>
-      <p className="mt-2 text-center text-[11px] text-muted-foreground/50">
-        <kbd className="rounded border border-border/50 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px]">⌘ Enter</kbd>{" "}
-        to submit
-      </p>
     </div>
   )
 
