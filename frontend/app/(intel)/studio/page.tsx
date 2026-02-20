@@ -147,7 +147,7 @@ function ActionButton({
       <div className="flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/80">
         <span>{action.label}</span>
         <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-amber-400/80">
-          Unavailable
+          Needs number
         </span>
       </div>
     )
@@ -156,7 +156,7 @@ function ActionButton({
     <div className="flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive/80">
       <span>{action.label}</span>
       <span className="rounded-full border border-destructive/40 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-destructive/70">
-        Unavailable
+        Failed
       </span>
     </div>
   )
@@ -343,7 +343,7 @@ export default function StudioPage() {
 
   // ── Action state helpers ───────────────────────────────────────
 
-  function setActionState(entryId: string, actionId: string, state: FeedEntry["actionState"] extends Record<string, infer S> ? S : never) {
+  function setActionState(entryId: string, actionId: string, state: "idle" | "loading" | "done" | "error" | "confirm") {
     setFeed((prev) => prev.map((e) =>
       e.id === entryId ? { ...e, actionState: { ...(e.actionState ?? {}), [actionId]: state } } : e
     ))
