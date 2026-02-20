@@ -18,24 +18,18 @@ const modeTooltips = {
   search: {
     title: "Quick scan",
     description: "Fast answers on pricing, yields, and neighborhoods",
-    proEnabled: true,
-    proDescription: "Instant signal scan across live inventory and DLD data",
-    footer: "Unlimited access for subscribers",
+    footer: "Available on request",
   },
   "deep-research": {
     title: "Market briefing",
-    description: "Generate an in-depth report with sources, charts, and risk bands",
-    proEnabled: true,
-    proDescription: "Multi-source reports with pricing reality and exit liquidity",
-    footer: "Extended access for subscribers",
+    description: "Prepare an in-depth report with sources, charts, and risk bands",
+    footer: "Available on request",
   },
   create: {
     title: "Portfolio plan",
     description: "Split budgets, build portfolios, and track scenarios",
     badge: "New",
-    proEnabled: true,
-    proDescription: "Build multi-asset portfolios with timing and risk filters",
-    footer: "48 plans remaining this month",
+    footer: "Available on request",
   },
 }
 
@@ -237,18 +231,6 @@ export function SearchBar({ onSearch }: { onSearch?: () => void }) {
           </div>
 
           <div className="border-t border-zinc-800 pt-2.5">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="rounded bg-teal-600 px-1.5 py-0.5 text-[9px] font-bold text-white">pro</span>
-              <div className="flex items-center gap-1">
-                <span className="text-[11px] font-medium text-teal-400">Enabled</span>
-                <svg className="h-3 w-3 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-[11px] text-zinc-300 mb-1.5 leading-relaxed">
-              {modeTooltips[hoveredMode].proDescription}
-            </p>
             <p className="text-[10px] text-zinc-500">{modeTooltips[hoveredMode].footer}</p>
           </div>
 

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Sidebar } from "@/app/components/sidebar"
+import { Sidebar } from "../components/sidebar"
 
 export default function IntelLayout({ children }: { children: ReactNode }) {
   return (

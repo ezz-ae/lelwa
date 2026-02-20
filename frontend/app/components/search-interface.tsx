@@ -28,7 +28,7 @@ export function Search() {
 
             <footer className="flex items-center justify-center gap-1 pt-4">
               <p className="flex flex-wrap items-center justify-center gap-1 text-[11px] md:text-xs text-muted-foreground text-center">
-                <span>Powered by Lelwa Intelligence for Dubai real estate</span>
+                <span>Powered by Lelwa</span>
               </p>
             </footer>
 

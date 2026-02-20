@@ -1,295 +1,144 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  ArrowUpRight,
-  CircleDot,
-  Layers,
-  LineChart,
-  MapPin,
-  Menu,
-  Shield,
-  Sparkles,
-  X,
-} from "lucide-react"
+import { CheckCircle2, Home, MessageSquare, Sparkles, UserCircle2 } from "lucide-react"
+import { primaryActions } from "@/lib/lelwa-actions"
 
-const words = ["districts", "launches", "assets", "signals", "yields"]
+const packages = ["Lelwa Core", "Lelwa Closer", "Lelwa Team"]
 
-const metrics = [
-  { label: "Projects scored", value: "7,015", detail: "Neon-ranked inventory" },
-  { label: "Signals tracked", value: "24", detail: "Demand, supply, timing" },
-  { label: "Avg gross yield", value: "6.4%", detail: "Prime Dubai 2025" },
-  { label: "Investor profiles", value: "18", detail: "Risk bands mapped" },
-]
-
-const signalHighlights = [
-  {
-    title: "Pulse Index",
-    detail: "Live demand + launch velocity",
-    icon: LineChart,
-  },
-  {
-    title: "Deal DNA",
-    detail: "Safety bands + price reality",
-    icon: Layers,
-  },
-  {
-    title: "Risk Shield",
-    detail: "Filter speculative exposure",
-    icon: Shield,
-  },
-]
-
-const zoneGrid = [
-  "Dubai Marina",
-  "Business Bay",
-  "Creek Harbour",
-  "Palm Jumeirah",
-  "JVC",
-  "Downtown",
+const railLinks = [
+  { href: "/", icon: Home, label: "Home" },
+  { href: "/studio", icon: MessageSquare, label: "Chat" },
+  { href: "/briefing", icon: CheckCircle2, label: "Results" },
+  { href: "/connect", icon: Sparkles, label: "Connect" },
 ]
 
 export default function MarketingLanding() {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [wordIndex, setWordIndex] = useState(0)
-  const [wordVisible, setWordVisible] = useState(true)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWordVisible(false)
-      setTimeout(() => {
-        setWordIndex((prev) => (prev + 1) % words.length)
-        setWordVisible(true)
-      }, 250)
-    }, 2600)
-
-    return () => clearInterval(interval)
-  }, [])
-
   return (
-    <div className="min-h-screen bg-[#0B0C0F] text-[#F4F4F5]">
-      <div className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-32 left-1/2 h-[480px] w-[480px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.35),_transparent_65%)] blur-3xl" />
-          <div className="absolute -bottom-48 right-[-120px] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.28),_transparent_70%)] blur-3xl" />
-          <div className="absolute inset-0 bg-[linear-gradient(120deg,_rgba(15,23,42,0.4),_rgba(15,23,42,0))]" />
-        </div>
-
-        <header className="relative z-10 px-6 md:px-12 pt-6">
-          <div className="mx-auto w-full max-w-6xl">
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#0B0C0F]/80 px-5 py-3 backdrop-blur">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                  <Sparkles className="h-5 w-5 text-teal-300" />
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-white/50">Lelwa</p>
-                  <p className="font-display text-sm text-white">Real Estate Intelligence</p>
-                </div>
-              </div>
-              <nav className="hidden md:flex items-center gap-6 text-sm text-white/70">
-                <Link href="/pulse" className="hover:text-white transition">Pulse</Link>
-                <Link href="/signals" className="hover:text-white transition">Signals</Link>
-                <Link href="/studio" className="hover:text-white transition">Studio</Link>
-                <Link href="/intake" className="hover:text-white transition">Intake</Link>
-                <Link href="/briefing" className="hover:text-white transition">Briefing</Link>
-              </nav>
-              <div className="hidden md:flex items-center gap-3">
-                <Button asChild variant="outline" className="rounded-full border-white/20 text-white">
-                  <Link href="/studio">Enter studio</Link>
-                </Button>
-                <Button asChild className="rounded-full">
-                  <Link href="/briefing">
-                    Book briefing
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMenuOpen((prev) => !prev)}
-                className="md:hidden text-white"
-                aria-label="Toggle menu"
-              >
-                {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
-            </div>
-            {menuOpen && (
-              <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B0C0F]/90 px-5 py-4 text-sm text-white/70 md:hidden">
-                <div className="flex flex-col gap-3">
-                  <Link href="/pulse" onClick={() => setMenuOpen(false)}>
-                    Pulse
-                  </Link>
-                  <Link href="/signals" onClick={() => setMenuOpen(false)}>
-                    Signals
-                  </Link>
-                  <Link href="/studio" onClick={() => setMenuOpen(false)}>
-                    Studio
-                  </Link>
-                  <Link href="/intake" onClick={() => setMenuOpen(false)}>
-                    Intake
-                  </Link>
-                  <Link href="/briefing" onClick={() => setMenuOpen(false)}>
-                    Briefing
-                  </Link>
-                </div>
-              </div>
-            )}
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="grid min-h-screen md:grid-cols-[88px_1fr]">
+        <aside className="hidden h-full flex-col items-center gap-6 border-r border-sidebar-border bg-sidebar py-6 md:flex">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/50 text-foreground">
+            <Sparkles className="h-5 w-5 text-primary" />
           </div>
-        </header>
-
-        <section className="relative z-10 px-6 md:px-12 pt-16 pb-20">
-          <div className="mx-auto w-full max-w-6xl grid gap-12 lg:grid-cols-[1.15fr_0.85fr] items-center">
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-white/10 text-white border-white/10">Dubai / UAE</Badge>
-                <Badge variant="outline" className="border-white/20 text-white/70">
-                  Live signal stack
-                </Badge>
-              </div>
-              <h1 className="font-display text-4xl md:text-6xl leading-tight">
-                Predict the best
-                <span
-                  className={`ml-2 inline-block text-teal-300 transition-opacity duration-300 ${
-                    wordVisible ? "opacity-100" : "opacity-0"
-                  }`}
+          <nav className="flex flex-1 flex-col items-center gap-3">
+            {railLinks.map((link) => {
+              const Icon = link.icon
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
+                  aria-label={link.label}
                 >
-                  {words[wordIndex]}
-                </span>
-                <span className="ml-2">before the market moves.</span>
-              </h1>
-              <p className="text-lg text-white/70 max-w-xl">
-                Lelwa turns real estate data into actionable strategy. Track demand surges, price
-                reality, and investor fit in one intelligence layer built for Dubai.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Button asChild className="rounded-full">
-                  <Link href="/studio">Enter live studio</Link>
+                  <Icon className="h-5 w-5" />
+                </Link>
+              )
+            })}
+          </nav>
+          <Link
+            href="/login"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
+            aria-label="Log in"
+          >
+            <UserCircle2 className="h-5 w-5" />
+          </Link>
+        </aside>
+
+        <main className="px-5 py-6 md:px-10">
+          <div className="relative h-full min-h-[92vh] rounded-[36px] border border-border/60 bg-gradient-to-br from-[#1A1B20] via-[#13151B] to-[#0D0F14] p-6 shadow-2xl shadow-black/40 md:p-10">
+            <div className="pointer-events-none absolute inset-0 rounded-[36px] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.1),_transparent_55%)]" />
+
+            <header className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted/60">
+                  <Sparkles className="h-5 w-5 text-foreground" />
+                </div>
+                <div className="text-left">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Lelwa</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button asChild variant="ghost" className="rounded-full text-muted-foreground hover:bg-muted/40">
+                  <Link href="/login">Log in</Link>
                 </Button>
-                <Button asChild variant="outline" className="rounded-full border-white/20 text-white">
-                  <Link href="/pulse">View market pulse</Link>
+                <Button asChild className="rounded-full">
+                  <Link href="/activate">Start with Lelwa</Link>
                 </Button>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 pt-4">
-                {metrics.slice(0, 2).map((metric) => (
-                  <div key={metric.label}>
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/50">{metric.label}</p>
-                    <p className="text-2xl font-semibold text-white">{metric.value}</p>
-                    <p className="text-xs text-white/50">{metric.detail}</p>
-                  </div>
+            </header>
+
+            <section className="relative z-10 mt-10 flex flex-col items-center text-center">
+              <h1 className="font-display text-3xl md:text-4xl text-foreground">How would you like to start?</h1>
+
+              <div className="mt-8 grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
+                {primaryActions.map((tile) => {
+                  const Icon = tile.icon
+                  return (
+                    <Link key={tile.id} href={`/activate?action=${tile.id}`} className="group">
+                      <div
+                        className="h-full rounded-[28px] p-[1px]"
+                        style={{
+                          background: `linear-gradient(135deg, ${tile.stroke[0]}, ${tile.stroke[1]})`,
+                        }}
+                      >
+                        <Card
+                          className="h-full border-0 shadow-[0_18px_40px_-30px_rgba(0,0,0,0.7)] transition-transform duration-200 group-hover:-translate-y-1"
+                          style={{
+                            background: `linear-gradient(140deg, ${tile.glow[0]}, rgba(15, 17, 22, 0.96) 65%), linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02))`,
+                          }}
+                        >
+                          <CardContent className="flex h-full flex-col items-start gap-6 p-4">
+                            <div
+                              className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/5"
+                              style={{ background: tile.iconBackground }}
+                            >
+                              <Icon className={`h-6 w-6 ${tile.iconClass}`} />
+                            </div>
+                            <p className="text-sm font-semibold text-foreground">{tile.label}</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+
+              <div className="mt-8 flex w-full flex-wrap items-center justify-center gap-2">
+                {primaryActions.map((action) => (
+                  <Link
+                    key={action.id}
+                    href={`/activate?action=${action.id}`}
+                    className="rounded-full border px-4 py-2 text-xs font-medium text-foreground/80 transition hover:text-foreground"
+                    style={{
+                      borderColor: action.chip.border,
+                      background: action.chip.background,
+                    }}
+                  >
+                    {action.label}
+                  </Link>
                 ))}
               </div>
-            </div>
 
-            <Card className="bg-white/5 border-white/10 shadow-2xl shadow-teal-500/10">
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/50">
-                    <CircleDot className="h-3 w-3 text-emerald-400" />
-                    Live pulse
-                  </div>
-                  <Badge variant="outline" className="border-white/20 text-white/70">
-                    Updated 2 min ago
-                  </Badge>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {metrics.map((metric) => (
-                    <div key={metric.label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-white/50">{metric.label}</p>
-                      <p className="text-2xl font-semibold text-white mt-2">{metric.value}</p>
-                      <p className="text-xs text-white/50 mt-1">{metric.detail}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm font-medium text-white">Momentum leaders</p>
-                  <div className="mt-3 grid gap-2 text-sm">
-                    {zoneGrid.map((zone) => (
-                      <div key={zone} className="flex items-center justify-between">
-                        <span className="flex items-center gap-2 text-white/80">
-                          <MapPin className="h-4 w-4" />
-                          {zone}
-                        </span>
-                        <span className="text-teal-300">+3.2%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-      </div>
-
-      <section className="px-6 md:px-12 pb-16">
-        <div className="mx-auto w-full max-w-6xl grid gap-6 md:grid-cols-3">
-          {signalHighlights.map((highlight) => {
-            const Icon = highlight.icon
-            return (
-              <Card key={highlight.title} className="bg-white/5 border-white/10">
-                <CardContent className="space-y-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                    <Icon className="h-5 w-5 text-teal-300" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">{highlight.title}</h3>
-                    <p className="text-sm text-white/60 mt-1">{highlight.detail}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      </section>
-
-      <section className="px-6 md:px-12 pb-20">
-        <div className="mx-auto w-full max-w-6xl rounded-[32px] border border-white/10 bg-white/5 p-8 md:p-12">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/50">Coverage map</p>
-              <h2 className="font-display text-3xl text-white mt-3">Signal coverage across Dubai neighborhoods.</h2>
-              <p className="text-sm text-white/60 mt-3 max-w-xl">
-                Track hypergrowth areas, pricing anomalies, and investor-fit zones with one shared view.
-              </p>
-            </div>
-            <Button asChild className="rounded-full">
-              <Link href="/signals">Explore signals</Link>
-            </Button>
-          </div>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {zoneGrid.map((zone) => (
-              <div key={zone} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-sm font-medium text-white">{zone}</p>
-                <p className="text-xs text-white/50 mt-2">Live demand index active</p>
+              <div className="mt-10 grid w-full gap-3 md:grid-cols-3">
+                {packages.map((pack) => (
+                  <Card
+                    key={pack}
+                    className="border border-border/60 bg-gradient-to-br from-white/10 via-white/5 to-transparent"
+                  >
+                    <CardContent className="flex items-center justify-between gap-4 p-4">
+                      <p className="text-sm font-semibold text-foreground">{pack}</p>
+                      <div className="h-8 w-8 rounded-full border border-border/60 bg-muted/30" />
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            ))}
+            </section>
           </div>
-        </div>
-      </section>
-
-      <section className="px-6 md:px-12 pb-24">
-        <div className="mx-auto w-full max-w-6xl rounded-[32px] border border-white/10 bg-gradient-to-r from-teal-500/10 via-transparent to-orange-500/10 p-8 md:p-12">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/50">Ready to move</p>
-              <h3 className="font-display text-3xl text-white mt-2">Book a market briefing built for your portfolio.</h3>
-              <p className="text-sm text-white/60 mt-3 max-w-xl">
-                Lelwa blends DLD transactions, developer reliability, and live demand into a single action plan.
-              </p>
-            </div>
-            <Button asChild className="rounded-full">
-              <Link href="/briefing">
-                Request briefing
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+        </main>
+      </div>
     </div>
   )
 }

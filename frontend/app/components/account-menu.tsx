@@ -8,10 +8,8 @@ import {
   Calendar,
   Bell,
   Plug,
-  Code,
   Gem,
   Settings2,
-  ArrowUpFromDot,
   Check,
   HelpCircle,
 } from "lucide-react"
@@ -51,7 +49,7 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
 
           <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-accent rounded transition-colors">
             <Mail className="h-4 w-4 shrink-0" />
-            <span>Assistant</span>
+            <span>Support</span>
           </button>
 
           <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-accent rounded transition-colors">
@@ -71,29 +69,17 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
 
           <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-accent rounded transition-colors">
             <Plug className="h-4 w-4 shrink-0" />
-            <span>Connectors</span>
-          </button>
-
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-accent rounded transition-colors">
-            <Code className="h-4 w-4 shrink-0" />
-            <span>API</span>
+            <span>Connections</span>
           </button>
 
           <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-accent rounded transition-colors">
             <Gem className="h-4 w-4 shrink-0" />
-            <span>Pro Perks</span>
+            <span>Packages</span>
           </button>
 
           <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-accent rounded transition-colors">
             <Settings className="h-4 w-4 shrink-0" />
             <span>All settings</span>
-          </button>
-
-          <div className="my-2 border-t border-border" />
-
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-accent rounded transition-colors">
-            <ArrowUpFromDot className="h-4 w-4 shrink-0" />
-            <span>Upgrade plan</span>
           </button>
 
           <div className="my-2 border-t border-border" />
@@ -108,9 +94,6 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
                 height={24}
                 className="rounded-full object-cover"
               />
-              <span className="absolute -bottom-1 -right-1 text-[8px] font-bold bg-primary text-primary-foreground px-1 rounded">
-                pro
-              </span>
             </div>
             <span className="flex-1 text-left">jessinsam</span>
             <Check className="h-4 w-4 text-primary shrink-0" />

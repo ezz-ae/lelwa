@@ -9,8 +9,8 @@ const _display = Fraunces({ subsets: ["latin"], variable: "--font-display" })
 const _mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
 export const metadata: Metadata = {
-  title: "Lelwa | Real Estate Intelligence",
-  description: "AI-powered market research and property intelligence for Dubai/UAE.",
+  title: "Lelwa | Real Estate Workspace",
+  description: "Real estate workspace for listings, leads, offers, and contracts in Dubai/UAE.",
   icons: {
     icon: [
       {

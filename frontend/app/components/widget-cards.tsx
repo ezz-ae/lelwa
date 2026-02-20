@@ -106,7 +106,7 @@ export function WidgetCards() {
         </div>
       </div>
 
-      {/* Assistant CTA Widget */}
+      {/* CTA Widget */}
       <div className="group relative overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 p-6 shadow-sm transition-all hover:shadow-lg">
         <img
           src="/lelwa-palette.jpeg"
@@ -115,7 +115,7 @@ export function WidgetCards() {
         />
         <div className="relative flex h-full items-end">
           <div className="font-mono text-sm font-medium uppercase tracking-wider text-white">
-            START A MARKET BRIEFING
+            START A MARKET BRIEF
           </div>
         </div>
       </div>
