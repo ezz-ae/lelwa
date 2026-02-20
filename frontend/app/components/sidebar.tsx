@@ -4,21 +4,18 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
-import { ArrowUpFromDot, CheckCircle2, Home, MessageSquare, Plus, Plug } from "lucide-react"
+import { Home, MessageSquare, Plus, Plug } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { UpgradeModal } from "./upgrade-modal"
 import { AccountMenu } from "./account-menu"
 
 const navItems = [
   { id: "home", label: "Home", href: "/", icon: Home },
-  { id: "studio", label: "Chat", href: "/studio", icon: MessageSquare },
-  { id: "results", label: "Results", href: "/briefing", icon: CheckCircle2 },
+  { id: "studio", label: "Console", href: "/studio", icon: MessageSquare },
   { id: "connect", label: "Connect", href: "/connect", icon: Plug },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [showAccountMenu, setShowAccountMenu] = useState(false)
 
   return (
@@ -92,19 +89,10 @@ export function Sidebar() {
             <span>Account</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setShowUpgradeModal(true)}
-            className="flex flex-col items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-          >
-            <ArrowUpFromDot className="h-5 w-5" />
-            <span>Packages</span>
-          </button>
         </div>
       </aside>
 
       <AccountMenu isOpen={showAccountMenu} onClose={() => setShowAccountMenu(false)} />
-      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
     </>
   )
 }

@@ -15,42 +15,42 @@ interface UpgradeModalProps {
 const packages = [
   {
     name: "Lelwa Core",
-    tagline: "For independent brokers",
+    tagline: "Independent brokers",
     actions: ["Run Ads", "Refresh Listing", "Qualify Leads"],
     features: [
-      "Refresh listings weekly",
-      "Qualify inbound leads instantly",
-      "Launch targeted ad copy in one click",
+      "Listing refresh on demand",
+      "Lead qualification on each submission",
+      "Ad copy prepared for immediate publication",
       "Up to 50 leads / month",
     ],
     recommended: false,
-    cta: "Get Core",
+    cta: "Activate Core",
     activateActions: ["run-ads", "refresh-listing", "qualify-leads"],
   },
   {
     name: "Lelwa Closer",
-    tagline: "For deal-focused brokers",
+    tagline: "Deal-focused brokers",
     actions: ["Call Leads", "Create Offer", "Create Contract"],
     features: [
-      "Voice calls to warm leads",
-      "Offer packs prepared in seconds",
-      "Contracts drafted, ready to send",
+      "Outbound voice calls to qualified leads",
+      "Offer documentation prepared per submission",
+      "Contracts drafted and ready to send",
       "Up to 200 leads / month",
-      "Priority support",
+      "Priority account support",
     ],
     recommended: true,
-    cta: "Get Closer",
+    cta: "Activate Closer",
     activateActions: ["calls", "create-offer", "create-contract"],
   },
   {
     name: "Lelwa Team",
-    tagline: "For brokerages",
+    tagline: "Brokerages",
     actions: ["Run Ads", "Call Leads", "Follow Up", "Review Activity"],
     features: [
-      "Everything in Closer",
+      "All Closer operations included",
       "Team activity dashboard",
       "Multi-desk routing",
-      "Unlimited leads",
+      "Unlimited lead volume",
       "Dedicated account manager",
     ],
     recommended: false,
@@ -108,9 +108,9 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Packages</p>
-              <h2 className="font-display text-3xl text-foreground">Pick your plan</h2>
+              <h2 className="font-display text-3xl text-foreground">Select a package</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Start with the actions you need. Upgrade anytime.
+                Choose the operations relevant to your volume and deal type.
               </p>
             </div>
           </div>
@@ -189,7 +189,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
           </div>
 
           <p className="text-center text-[12px] text-muted-foreground/60">
-            All plans include a 14-day free trial. No credit card required to start.
+            All packages activate immediately. Contact your account manager for enterprise pricing.
           </p>
         </div>
       </div>

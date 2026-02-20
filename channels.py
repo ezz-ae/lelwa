@@ -116,13 +116,18 @@ def create_resume_token(
 def consume_resume_token(token: str) -> Optional[dict]:
     """
     Fetch and atomically delete a resume token.
-    Returns None if the token does not exist (expired or already used).
+    Tokens expire after 24 hours.
+    Returns None if the token does not exist, has expired, or was already used.
     """
+    from datetime import timedelta
+    cutoff = (datetime.now() - timedelta(hours=24)).isoformat()
     with sqlite3.connect(CHANNEL_DB) as db:
+        # Purge stale tokens (older than 24h) on every consume
+        db.execute("DELETE FROM resume_tokens WHERE created_at < ?", (cutoff,))
         row = db.execute(
             "SELECT user_id, session_id, tool_name, args_json "
-            "FROM resume_tokens WHERE token=?",
-            (token,),
+            "FROM resume_tokens WHERE token=? AND created_at >= ?",
+            (token, cutoff),
         ).fetchone()
         if not row:
             return None

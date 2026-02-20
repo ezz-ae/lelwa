@@ -24,7 +24,11 @@ interface ConnectSheetProps {
 
 const CHANNEL_LABELS: Record<string, string> = {
   whatsapp: "WhatsApp",
-  voice: "Voice calls",
+  voice: "Voice",
+  instagram: "Instagram",
+  facebook: "Facebook",
+  email: "Email",
+  portals: "Listing Portals",
 }
 
 export function ConnectSheet({
@@ -70,9 +74,7 @@ export function ConnectSheet({
         const resumeData = await resumeRes.json()
 
         if (!resumeRes.ok || resumeData.status === "still_blocked") {
-          throw new Error(
-            "Credentials saved but the action could not complete. Check your values and try again.",
-          )
+          throw new Error("Unavailable")
         }
 
         setPhase("done")
@@ -91,7 +93,7 @@ export function ConnectSheet({
       }
     } catch (err) {
       setPhase("form")
-      setError(err instanceof Error ? err.message : "Connection failed")
+      setError(err instanceof Error ? err.message : "Unavailable")
     }
   }
 
@@ -125,9 +127,7 @@ export function ConnectSheet({
             Connect · {channelLabel}
           </p>
           <h2 className="mt-1 text-lg font-semibold text-foreground">{prompt}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Stored locally. Never shared.
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Not connected</p>
         </div>
 
         {/* Form */}
