@@ -5,9 +5,9 @@
 
 :root {
     --font-sans: var(--font-body);
-    --background: 34 28% 92%;
+    --background: 32 22% 90%;
     --foreground: 210 15% 16%;
-    --card: 35 40% 96%;
+    --card: 32 28% 94%;
     --card-foreground: 210 15% 16%;
     --popover: 36 50% 97%;
     --popover-foreground: 210 15% 16%;
@@ -15,14 +15,14 @@
     --primary-foreground: 0 0% 98%;
     --secondary: 24 70% 50%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 34 18% 86%;
+    --muted: 32 16% 84%;
     --muted-foreground: 210 12% 40%;
     --accent: 162 30% 90%;
     --accent-foreground: 210 15% 20%;
     --destructive: 0 78% 55%;
     --destructive-foreground: 0 0% 98%;
-    --border: 34 16% 80%;
-    --input: 34 18% 88%;
+    --border: 32 14% 78%;
+    --input: 32 16% 86%;
     --ring: 176 46% 30%;
     --chart-1: 176 46% 30%;
     --chart-2: 24 70% 50%;
@@ -30,13 +30,13 @@
     --chart-4: 42 60% 50%;
     --chart-5: 150 40% 45%;
     --radius: 0.9rem;
-    --sidebar-background: 34 30% 91%;
+    --sidebar-background: 32 20% 88%;
     --sidebar-foreground: 210 15% 16%;
     --sidebar-primary: 176 46% 30%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 162 30% 90%;
     --sidebar-accent-foreground: 210 15% 20%;
-    --sidebar-border: 34 16% 80%;
+    --sidebar-border: 32 14% 78%;
     --sidebar-ring: 176 46% 30%;
   }
 
