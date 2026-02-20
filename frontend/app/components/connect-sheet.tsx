@@ -12,12 +12,14 @@ interface ConnectField {
 
 interface ConnectSheetProps {
   isOpen: boolean
-  channel: "whatsapp" | "voice" | string
+  channel: string
   prompt: string
   fields: ConnectField[]
-  resume?: { tool_name: string; args: Record<string, unknown> }
+  /** When present, the sheet calls /v1/actions/resume after saving credentials. */
+  resumeToken?: string
   onClose: () => void
-  onConnected: () => void
+  /** Called with the resume result (if any) after the full flow completes. */
+  onConnected: (resumeResult?: Record<string, unknown>) => void
 }
 
 const CHANNEL_LABELS: Record<string, string> = {
@@ -30,53 +32,88 @@ export function ConnectSheet({
   channel,
   prompt,
   fields,
+  resumeToken,
   onClose,
   onConnected,
 }: ConnectSheetProps) {
   const [values, setValues] = useState<Record<string, string>>({})
-  const [loading, setLoading] = useState(false)
-  const [done, setDone] = useState(false)
+  const [phase, setPhase] = useState<"form" | "saving" | "resuming" | "done">("form")
   const [error, setError] = useState<string | null>(null)
 
   if (!isOpen) return null
 
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
   const channelLabel = CHANNEL_LABELS[channel] ?? channel
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    setLoading(true)
+    setPhase("saving")
+
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
-      const res = await fetch(`${apiBase}/v1/channels/configure`, {
+      // Step 1 — save credentials
+      const saveRes = await fetch(`${apiBase}/v1/channels/configure`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channel, config: values, user_id: "default" }),
       })
-      if (!res.ok) throw new Error(await res.text())
-      setDone(true)
-      setTimeout(() => {
-        setDone(false)
-        setValues({})
-        onConnected()
-      }, 800)
+      if (!saveRes.ok) throw new Error(await saveRes.text())
+
+      // Step 2 — resume the pending action (if token provided)
+      if (resumeToken) {
+        setPhase("resuming")
+        const resumeRes = await fetch(`${apiBase}/v1/actions/resume`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resume_token: resumeToken }),
+        })
+        const resumeData = await resumeRes.json()
+
+        if (!resumeRes.ok || resumeData.status === "still_blocked") {
+          throw new Error(
+            "Credentials saved but the action could not complete. Check your values and try again.",
+          )
+        }
+
+        setPhase("done")
+        setTimeout(() => {
+          setPhase("form")
+          setValues({})
+          onConnected(resumeData)
+        }, 700)
+      } else {
+        setPhase("done")
+        setTimeout(() => {
+          setPhase("form")
+          setValues({})
+          onConnected()
+        }, 700)
+      }
     } catch (err) {
+      setPhase("form")
       setError(err instanceof Error ? err.message : "Connection failed")
-    } finally {
-      setLoading(false)
     }
   }
+
+  const loading = phase === "saving" || phase === "resuming"
+  const done = phase === "done"
+  const buttonLabel =
+    done ? "Done"
+    : phase === "resuming" ? "Sending…"
+    : phase === "saving" ? "Saving…"
+    : `Connect ${channelLabel}`
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-150 sm:items-center"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={(e) => e.target === e.currentTarget && !loading && onClose()}
     >
       <div className="relative w-full max-w-md rounded-t-3xl border border-border/60 bg-card p-6 shadow-2xl shadow-black/40 animate-in slide-in-from-bottom-4 duration-200 sm:rounded-3xl">
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-border/50 bg-muted/40 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+          disabled={loading}
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-border/50 bg-muted/40 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-40"
           aria-label="Close"
         >
           <X className="h-3.5 w-3.5" />
@@ -89,7 +126,7 @@ export function ConnectSheet({
           </p>
           <h2 className="mt-1 text-lg font-semibold text-foreground">{prompt}</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Credentials are stored locally and never shared.
+            Stored locally. Never shared.
           </p>
         </div>
 
@@ -97,18 +134,21 @@ export function ConnectSheet({
         <form onSubmit={handleSubmit} className="space-y-3">
           {fields.map((field) => (
             <div key={field.key} className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{field.label}</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                {field.label}
+              </label>
               <input
                 type={field.type}
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
                 required
+                disabled={loading || done}
                 value={values[field.key] ?? ""}
                 onChange={(e) =>
                   setValues((prev) => ({ ...prev, [field.key]: e.target.value }))
                 }
-                className="w-full rounded-xl border border-border/60 bg-muted/30 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-border focus:outline-none focus:ring-0 transition"
+                className="w-full rounded-xl border border-border/60 bg-muted/30 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-border focus:outline-none transition disabled:opacity-50"
               />
             </div>
           ))}
@@ -125,17 +165,11 @@ export function ConnectSheet({
             className="mt-1 w-full rounded-full"
           >
             {done ? (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Connected
-              </>
+              <><Check className="mr-2 h-4 w-4" />{buttonLabel}</>
             ) : loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Connecting…
-              </>
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{buttonLabel}</>
             ) : (
-              `Connect ${channelLabel}`
+              buttonLabel
             )}
           </Button>
         </form>
