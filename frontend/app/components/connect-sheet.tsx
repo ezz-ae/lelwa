@@ -172,6 +172,9 @@ export function ConnectSheet({
               buttonLabel
             )}
           </Button>
+          <p className="mt-2 text-center text-[11px] text-muted-foreground/50">
+            Stored locally. Never transmitted to third parties.
+          </p>
         </form>
       </div>
     </div>
