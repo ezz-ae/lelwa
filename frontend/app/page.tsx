@@ -4,50 +4,13 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
-  ArrowUpRight,
   CheckCircle2,
   Home,
   MessageSquare,
   Sparkles,
   UserCircle2,
-  Zap,
-  Users,
-  TrendingUp,
 } from "lucide-react"
 import { primaryActions } from "@/lib/lelwa-actions"
-
-const packages = [
-  {
-    name: "Lelwa Core",
-    description: "Auto-reply, ad copy, and listing refresh for solo agents.",
-    icon: Zap,
-    iconColor: "text-amber-400",
-    iconBg: "bg-amber-500/10",
-    cta: "Start with Core",
-    href: "/activate",
-    recommended: false,
-  },
-  {
-    name: "Lelwa Closer",
-    description: "AI calls, offer packs, and contracts — everything to close faster.",
-    icon: TrendingUp,
-    iconColor: "text-violet-400",
-    iconBg: "bg-violet-500/10",
-    cta: "Start with Closer",
-    href: "/activate",
-    recommended: true,
-  },
-  {
-    name: "Lelwa Team",
-    description: "Multi-agent routing, activity dashboards, and unlimited leads.",
-    icon: Users,
-    iconColor: "text-sky-400",
-    iconBg: "bg-sky-500/10",
-    cta: "Contact Sales",
-    href: "/activate",
-    recommended: false,
-  },
-]
 
 const railLinks = [
   { href: "/", icon: Home, label: "Home" },
@@ -109,7 +72,7 @@ export default function MarketingLanding() {
                   <Link href="/login">Log in</Link>
                 </Button>
                 <Button asChild className="rounded-full">
-                  <Link href="/activate">Start with Lelwa</Link>
+                  <Link href="/studio">Open Console</Link>
                 </Button>
               </div>
             </header>
@@ -126,7 +89,7 @@ export default function MarketingLanding() {
                 {primaryActions.map((tile) => {
                   const Icon = tile.icon
                   return (
-                    <Link key={tile.id} href={`/activate?action=${tile.id}`} className="group">
+                    <Link key={tile.id} href={`/studio?action=${tile.id}`} className="group">
                       <div
                         className="h-full rounded-[28px] p-[1px]"
                         style={{
@@ -160,7 +123,7 @@ export default function MarketingLanding() {
                 {primaryActions.map((action) => (
                   <Link
                     key={action.id}
-                    href={`/activate?action=${action.id}`}
+                    href={`/studio?action=${action.id}`}
                     className="rounded-full border px-4 py-2 text-xs font-medium text-foreground/80 transition hover:text-foreground"
                     style={{
                       borderColor: action.chip.border,
@@ -172,55 +135,6 @@ export default function MarketingLanding() {
                 ))}
               </div>
 
-              {/* Plans section */}
-              <div className="mt-10 w-full">
-                <p className="mb-4 text-xs uppercase tracking-[0.2em] text-muted-foreground/70">Plans</p>
-                <div className="grid w-full gap-3 md:grid-cols-3">
-                  {packages.map((pack) => {
-                    const Icon = pack.icon
-                    return (
-                      <Card
-                        key={pack.name}
-                        className={`relative border bg-gradient-to-br from-white/10 via-white/5 to-transparent transition-all hover:from-white/[0.12] ${
-                          pack.recommended ? "border-violet-500/30" : "border-border/60"
-                        }`}
-                      >
-                        {pack.recommended && (
-                          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                            <span className="rounded-full border border-violet-500/40 bg-gradient-to-r from-violet-600 to-indigo-600 px-2.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
-                              Popular
-                            </span>
-                          </div>
-                        )}
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${pack.iconBg}`}
-                            >
-                              <Icon className={`h-4 w-4 ${pack.iconColor}`} />
-                            </div>
-                            <div className="flex-1 text-left">
-                              <p className="text-sm font-semibold text-foreground">{pack.name}</p>
-                              <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{pack.description}</p>
-                            </div>
-                            <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
-                          </div>
-                          <div className="mt-4">
-                            <Button
-                              asChild
-                              size="sm"
-                              className="w-full rounded-full"
-                              variant={pack.recommended ? "default" : "outline"}
-                            >
-                              <Link href={pack.href}>{pack.cta}</Link>
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )
-                  })}
-                </div>
-              </div>
             </section>
           </div>
         </main>

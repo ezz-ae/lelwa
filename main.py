@@ -1,11 +1,12 @@
 import os
 import json
+import re
 import random
 import hashlib
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -14,23 +15,19 @@ import google.generativeai as genai
 from security import SecurityShield, RequestSignature
 from tools import ToolExecutor
 
-# Load environment variables
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Initialize Engines
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 genai.configure(api_key=GEMINI_API_KEY)
-shield = SecurityShield() # Implementation based on your Security Shield logic
+shield = SecurityShield()
 executor = ToolExecutor(engine)
 
-# Ensure static directory exists
 os.makedirs("static", exist_ok=True)
 
-app = FastAPI(title="Lelwa Intelligence API", version="2.0.0")
+app = FastAPI(title="Lelwa API", version="3.0.0")
 
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,10 +36,60 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static directory for PDFs
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# ── MODELS ──────────────────────────────────────────────────────
+# ── CHANNEL STORE (file-based, no DB dependency) ──────────────────────────────
+
+CHANNEL_STORE_PATH = "channel_store.json"
+
+
+def _load_channel_store() -> dict:
+    try:
+        with open(CHANNEL_STORE_PATH, "r") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _save_channel_store(store: dict):
+    with open(CHANNEL_STORE_PATH, "w") as f:
+        json.dump(store, f, indent=2)
+
+
+def _apply_channel_to_env(channel: str, config: dict):
+    """Write channel credentials to os.environ for this process lifetime."""
+    if channel == "whatsapp":
+        mapping = {
+            "account_sid": "TWILIO_ACCOUNT_SID",
+            "auth_token": "TWILIO_AUTH_TOKEN",
+            "from_number": "TWILIO_WHATSAPP_FROM",
+        }
+    elif channel == "voice":
+        mapping = {
+            "account_sid": "TWILIO_ACCOUNT_SID",
+            "auth_token": "TWILIO_AUTH_TOKEN",
+            "from_number": "TWILIO_VOICE_FROM",
+        }
+    else:
+        return
+    for cfg_key, env_key in mapping.items():
+        if cfg_key in config and config[cfg_key]:
+            os.environ[env_key] = config[cfg_key]
+
+
+def _boot_channels():
+    """On startup, load persisted channel credentials into env."""
+    store = _load_channel_store()
+    for _user_id, channels in store.items():
+        for channel, data in channels.items():
+            if data.get("status") == "connected":
+                _apply_channel_to_env(channel, data.get("config", {}))
+
+
+_boot_channels()
+
+# ── MODELS ────────────────────────────────────────────────────────────────────
+
 
 class ChatRequest(BaseModel):
     message: str
@@ -50,360 +97,343 @@ class ChatRequest(BaseModel):
     model: Optional[str] = "gemini"
     context: Optional[Dict[str, Any]] = {}
 
+
 class ToolRequest(BaseModel):
     tool_name: str
     args: Dict[str, Any]
 
-# ── SYSTEM PROMPT (The Intelligence Engine) ──────────────────────────
 
-SYSTEM_PROMPT = """You are the Entrestate Intelligence Engine. 
-Your objective is to provide high-fidelity, deterministic market research for Dubai/UAE real estate.
-Output Protocol:
-1. OBJECTIVITY: Provide raw data analysis. No conversational filler.
-2. DETERMINISTIC MAPPING: Every claim must be backed by a tool-driven data point.
-3. RISK ADJUDICATION: Highlight high-risk signals (Speculative/Opportunistic) using structural data.
-4. ARCHITECTURE: You interface with the Neon spine to extract reality from market noise.
+class ChannelConfigRequest(BaseModel):
+    channel: str
+    config: Dict[str, str]
+    user_id: str = "default"
+
+
+# ── SYSTEM PROMPT ─────────────────────────────────────────────────────────────
+
+SYSTEM_PROMPT = """You are Lelwa. A real estate operator console for Dubai brokers.
+
+When a broker drops a lead, listing, or request:
+1. Call any tools you need to gather property data, market data, or lead scores.
+2. Then output ONLY a JSON object — no text before or after — using this exact schema:
+
+{
+  "reply": "What is prepared. 1-2 sentences. Operational only.",
+  "prepared_blocks": [
+    {
+      "type": "reply|call_script|offer|contract|followups|summary",
+      "title": "Short block title",
+      "content": "Specific prepared text for this broker's request. Not a template — real content."
+    }
+  ],
+  "prepared_actions": [
+    {
+      "id": "unique_id",
+      "label": "Send on WhatsApp",
+      "tool_name": "send_whatsapp",
+      "args": {"message_body": "exact text from reply block"},
+      "requires": "connection"
+    }
+  ]
+}
+
+BLOCK TYPES:
+- reply: Prepared WhatsApp or email message ready to send to the client
+- call_script: Step-by-step script the broker uses on the call
+- offer: Offer terms, pricing, and key numbers
+- contract: Contract terms or tenancy summary
+- followups: Scheduled follow-up messages with exact timing
+- summary: Market data, lead score, property comparison, or general findings
+
+ALWAYS include:
+- A "reply" block with the actual message text when a lead or client is mentioned
+- A "call_script" block when a call or phone is mentioned
+- An "offer" block when a budget, price, or purchase is mentioned
+- A "summary" block with key data from any tool results
+
+ACTION RULES (requires field):
+- send_whatsapp → "connection"
+- call_investor → "connection"
+- generate_offer, generate_rental_contract, generate_document_pdf → "confirmation"
+- All other internal tools → "none"
+
+FORBIDDEN in any output text: AI, Intelligence, Agent, Cognitive, Autonomous, Workflow,
+Automation, Passwordless, Onboarding, Strategy, Assistant, Bot, Super, Pro, Plus, Algorithm
+
+USE ONLY: Send, Call, Offer, Contract, Listing, Follow-up, Meeting, Ads, Reply, Prepared,
+Confirm, Export, Review, Create, Viewing, Client, Lead, Broker, Market, Property, Schedule
 """
 
-# ── ENDPOINTS ───────────────────────────────────────────────────
+# ── RESPONSE PARSER ───────────────────────────────────────────────────────────
+
+
+def _parse_broker_response(text: str) -> dict:
+    """Extract JSON from LLM response. Falls back gracefully."""
+    text = text.strip()
+
+    # Try direct JSON parse
+    if text.startswith("{"):
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+
+    # Try extract from fenced code block
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    # Try find any JSON object with prepared_blocks key
+    match = re.search(r'\{[^{}]*"prepared_blocks"[^{}]*\[.*?\]\s*\}', text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+
+    # Fallback: wrap as summary block
+    short = text[:400] + ("..." if len(text) > 400 else "")
+    return {
+        "reply": short,
+        "prepared_blocks": [{"type": "summary", "title": "Prepared", "content": text}],
+        "prepared_actions": [],
+    }
+
+
+# ── ENDPOINTS ─────────────────────────────────────────────────────────────────
+
 
 @app.post("/v1/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):
     """
-    Main conversational entry point. 
-    Handles intent extraction, tool execution, and response narration.
+    Main entry point. Returns structured work feed response.
+
+    Response contract:
+      reply: str
+      prepared_blocks: [{type, title, content}]
+      prepared_actions: [{id, label, tool_name, args, requires}]
+      artifacts: [{type, title, url_or_content}]
+      requires_connection: {channel, prompt, fields, resume} | null
     """
-    # 1. Security Check
     sig = RequestSignature(
         session_id=req.session_id,
         timestamp=datetime.now(),
         intent="chat",
         params={"message": req.message},
-        ip_hash=hashlib.md5(request.client.host.encode()).hexdigest()
+        ip_hash=hashlib.md5(request.client.host.encode()).hexdigest(),
     )
     assessment = shield.evaluate_request(sig)
-    
-    # 2. Initialize Gemini with Tools
-    # Note: Tool definitions are pulled from your entrestate_codex_spec_v1.json
+
     model = genai.GenerativeModel(
-        model_name='gemini-2.0-flash',
+        model_name="gemini-2.0-flash",
         system_instruction=SYSTEM_PROMPT,
-        tools=executor.get_tool_definitions()
+        tools=executor.get_tool_definitions(),
     )
-    
+
     chat = model.start_chat(history=[])
     response = chat.send_message(req.message)
 
-    # 3. Handle Tool Calls (Multi-turn)
-    for _ in range(5): # Max 5 tool iterations
-        if not response.candidates[0].content.parts[0].function_call:
+    # Tool calling loop (max 5 rounds)
+    for _ in range(5):
+        if not response.candidates or not response.candidates[0].content.parts:
             break
-            
+        has_func = any(
+            hasattr(p, "function_call") and p.function_call.name
+            for p in response.candidates[0].content.parts
+        )
+        if not has_func:
+            break
+
         tool_responses = []
         for part in response.candidates[0].content.parts:
-            if part.function_call:
+            if hasattr(part, "function_call") and part.function_call.name:
                 call = part.function_call
-                # Execute deterministic logic in Neon/Python
                 result = executor.execute(call.name, dict(call.args), req.session_id)
-                
-                # Apply Security Degradation if needed
-                if assessment.threat_level != 'clear':
+                if assessment.threat_level != "clear":
                     result = shield.degrade_response(result, assessment)
-                
-                tool_responses.append(genai.protos.Part(
-                    function_response=genai.protos.FunctionResponse(
-                        name=call.name,
-                        response={'result': json.dumps(result, default=str)}
+                tool_responses.append(
+                    genai.protos.Part(
+                        function_response=genai.protos.FunctionResponse(
+                            name=call.name,
+                            response={"result": json.dumps(result, default=str)},
+                        )
                     )
-                ))
-        
+                )
+
+        if not tool_responses:
+            break
         response = chat.send_message(genai.protos.Content(parts=tool_responses))
 
+    raw_text = getattr(response, "text", "") or ""
+    structured = _parse_broker_response(raw_text)
+
+    # Surface any requires_connection from prepared_actions
+    requires_connection = None
+    for action in structured.get("prepared_actions", []):
+        if action.get("requires") == "connection":
+            # Will be resolved JIT when the broker actually clicks the button
+            break
+
     return {
-        "reply": response.text,
+        "reply": structured.get("reply", raw_text),
+        "prepared_blocks": structured.get("prepared_blocks", []),
+        "prepared_actions": structured.get("prepared_actions", []),
+        "artifacts": structured.get("artifacts", []),
+        "requires_connection": requires_connection,
         "session_id": req.session_id,
         "threat_level": assessment.threat_level,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
+
+
+@app.post("/v1/channels/configure")
+async def configure_channel(req: ChannelConfigRequest):
+    """
+    Store channel credentials. Called by the JIT connect sheet.
+    Persists to file and applies to current process environment.
+    """
+    store = _load_channel_store()
+    if req.user_id not in store:
+        store[req.user_id] = {}
+    store[req.user_id][req.channel] = {
+        "config": req.config,
+        "status": "connected",
+        "updated_at": datetime.now().isoformat(),
+    }
+    _save_channel_store(store)
+    _apply_channel_to_env(req.channel, req.config)
+    return {"status": "connected", "channel": req.channel}
+
+
+@app.get("/v1/channels")
+async def list_channels(user_id: str = "default"):
+    """List configured channels for a user."""
+    store = _load_channel_store()
+    user_ch = store.get(user_id, {})
+    return {
+        ch: {"status": data.get("status"), "updated_at": data.get("updated_at")}
+        for ch, data in user_ch.items()
+    }
+
 
 @app.post("/v1/tools/{tool_name}")
 async def run_tool(tool_name: str, req: ToolRequest):
-    """Direct access to the 18 deterministic tools for the UI."""
-    try:
-        result = executor.execute(tool_name, req.args)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    """
+    Direct tool execution endpoint.
+    Returns preflight object if channel is not configured.
+    The UI checks for requires_connection in the response.
+    """
+    result = executor.execute(tool_name, req.args)
+    return result
+
 
 @app.get("/v1/profile/{session_id}")
 async def get_profile(session_id: str):
-    """Retrieve the persistent investor profile from Neon."""
+    """Retrieve the persistent broker profile."""
     with engine.connect() as conn:
         res = conn.execute(
             text("SELECT * FROM investor_intent_profiles WHERE session_id = :sid"),
-            {"sid": session_id}
+            {"sid": session_id},
         ).fetchone()
         if not res:
             return {"status": "new_user"}
         return dict(res._mapping)
 
+
 @app.get("/v1/market/overview")
 async def market_overview():
-    """Public stats for the landing page trust bar."""
+    """Public market stats."""
     with engine.connect() as conn:
         res = conn.execute(text("SELECT * FROM get_market_overview()")).fetchone()
         return dict(res._mapping)
 
+
 @app.websocket("/v1/chat/stream/{session_id}")
 async def websocket_chat(websocket: WebSocket, session_id: str):
-    """Real-time streaming chat for the Gemini Business UI."""
+    """Real-time streaming chat."""
     await websocket.accept()
     model = genai.GenerativeModel(
-        model_name='gemini-2.0-flash',
+        model_name="gemini-2.0-flash",
         system_instruction=SYSTEM_PROMPT,
-        tools=executor.get_tool_definitions()
+        tools=executor.get_tool_definitions(),
     )
     chat_session = model.start_chat(history=[])
-    
     try:
         while True:
             user_msg = await websocket.receive_text()
             response = chat_session.send_message(user_msg, stream=True)
-            
             for chunk in response:
                 if chunk.text:
                     await websocket.send_json({"type": "text", "content": chunk.text})
-                
-                if chunk.candidates[0].content.parts[0].function_call:
-                    call = chunk.candidates[0].content.parts[0].function_call
-                    result = executor.execute(call.name, dict(call.args), session_id)
-                    
-                    # Send structured data to frontend if it's a property search
-                    if call.name == "search_properties" and isinstance(result, list):
-                        await websocket.send_json({"type": "properties", "content": result})
-                    
-                    # Send map data if location is explained
-                    if call.name == "explain_location" and "coordinates" in result:
-                        await websocket.send_json({
-                            "type": "map", 
-                            "content": {
-                                "lat": result["coordinates"]["lat"],
-                                "lng": result["coordinates"]["lng"],
-                                "area": result["area"]
-                            }
-                        })
-                    
-                    # Send PDF data if document is generated
-                    if call.name == "generate_document_pdf" and "pdf_url" in result:
-                        await websocket.send_json({"type": "pdf", "content": result})
-
-                    # Send mortgage data if calculated
-                    if call.name == "calculate_mortgage" and "monthly_payment" in result:
-                        await websocket.send_json({"type": "mortgage", "content": result})
-
-                    # Send investment analysis data if calculated
-                    if call.name == "analyze_investment" and "projections" in result:
-                        await websocket.send_json({"type": "investment_analysis", "content": result})
-
-                    # Send audio data if call is placed
-                    if call.name == "call_investor" and "status" in result:
-                        await websocket.send_json({
-                            "type": "audio",
-                            "content": {
-                                "audio_url": "https://api.ezz.ae/static/audio/sample_call.mp3",
-                                "text": dict(call.args).get("message", "Calling investor...")
-                            }
-                        })
-                    
-                    tool_response = chat_session.send_message(
-                        genai.protos.Content(parts=[genai.protos.Part(
-                            function_response=genai.protos.FunctionResponse(
-                                name=call.name, response={'result': json.dumps(result, default=str)}
-                            )
-                        )]),
-                        stream=True
-                    )
-                    for t_chunk in tool_response:
-                        if t_chunk.text:
-                            await websocket.send_json({"type": "text", "content": t_chunk.text})
             await websocket.send_json({"type": "end"})
     except WebSocketDisconnect:
         pass
 
+
 @app.get("/v1/market/pulse")
 async def market_pulse():
-    """Aggregates high-level market signals and growth intelligence."""
-    # Database is currently unavailable or being initialized. 
-    # Returning sample data to ensure UI loads.
-    print("Database connection skipped, returning sample data.")
-    
-    # Fallback sample data
-    hypergrowth_areas = [
-        {
-            "area": "Business Bay", 
-            "growth_score": 88.5, 
-            "growth_class": "HYPERGROWTH", 
-            "avg_yield": 7.2, 
-            "lat": 25.18, "lng": 55.27, 
-            "avg_psf": 1850, 
-            "personas": {"Yield Seeker": 45, "End User": 30},
-            "top_projects": [
-                {"name": "Peninsula Four", "score": 94},
-                {"name": "Regalia", "score": 89},
-                {"name": "Vela by Omniyat", "score": 97}
-            ]
-        },
-        {
-            "area": "Dubai Marina", 
-            "growth_score": 92.1, 
-            "growth_class": "HYPERGROWTH", 
-            "avg_yield": 6.8, 
-            "lat": 25.08, "lng": 55.14, 
-            "avg_psf": 2200, 
-            "personas": {"Trophy Buyer": 55, "Yield Seeker": 25},
-            "top_projects": [
-                {"name": "Marina Shores", "score": 91},
-                {"name": "Cavalli Tower", "score": 95},
-                {"name": "LIV LUX", "score": 88}
-            ]
-        },
-        {
-            "area": "Jumeirah Village Circle", 
-            "short_name": "JVC",
-            "growth_score": 85.3, 
-            "growth_class": "HYPERGROWTH", 
-            "avg_yield": 8.1, 
-            "lat": 25.06, "lng": 55.20, 
-            "avg_psf": 1100, 
-            "personas": {"End User": 60, "Yield Seeker": 35},
-            "top_projects": [
-                {"name": "Binghatti Heights", "score": 84},
-                {"name": "The Catchway", "score": 82},
-                {"name": "Vantage", "score": 86}
-            ]
-        },
-        {
-            "area": "Palm Jumeirah", 
-            "growth_score": 96.4, 
-            "growth_class": "HYPERGROWTH", 
-            "avg_yield": 4.5, 
-            "lat": 25.11, "lng": 55.13, 
-            "avg_psf": 4500, 
-            "personas": {"Trophy Buyer": 85, "UHNW": 90},
-            "top_projects": [
-                {"name": "Royal Atlantis", "score": 99},
-                {"name": "Orla by Omniyat", "score": 98},
-                {"name": "Six Senses Residences", "score": 96}
-            ]
-        }
-    ]
-    # Add history to samples
-    quarters = ["Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025"]
-    for area in hypergrowth_areas:
-        base_score = area['growth_score']
-        area['growth_history'] = {q: round(base_score * (0.7 + random.random() * 0.3), 1) for q in quarters[:-1]}
-        area['growth_history'][quarters[-1]] = base_score
-        base_psf = area['avg_psf']
-        area['psf_history'] = {q: round(base_psf * (0.9 + random.random() * 0.2), 0) for q in quarters[:-1]}
-        area['psf_history'][quarters[-1]] = base_psf
-
-    regime_data = {
-        "regime": "Institutional Safe", 
-        "directive": "ACCELERATE", 
-        "signals": {
-            "transaction_velocity": "Bullish", 
-            "launch_rate": "High Energy",
-            "demand_intensity": 92,
-            "construction_rate": 312,
-            "handover_traffic": 4850,
-            "seasonal_position": "Peak Inflow"
-        }
-    }
-    efficiency = 84.2
-    current_dist = {
-        "Yield Seeker": 145, 
-        "End User": 92, 
-        "Trophy Buyer": 58,
-        "Flipper": 34,
-        "Portfolio Builder": 27
-    }
-
-    # Common logic for both DB success and fallback
-    # Simulate history for the last 4 quarters
-    persona_history = {}
-    quarters = ["Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025"]
-    for q in quarters:
-        persona_history[q] = {k: int(v * (0.8 + random.random() * 0.4)) for k, v in current_dist.items()}
-    persona_history["Q4 2025"] = current_dist
-    
+    """Market signals — returns sample data if DB unavailable."""
     return {
-        "regime": regime_data.get("regime", "Balanced"),
-        "directive": regime_data.get("directive", "MAINTAIN"),
-        "market_efficiency_score": round(efficiency, 1) if efficiency else 65.0,
-        "hypergrowth_areas": hypergrowth_areas,
-        "signals": regime_data.get("signals", {
-            "transaction_velocity": "Moderate",
-            "launch_rate": "Stable",
-            "demand_intensity": 70,
-            "construction_rate": 60,
-            "handover_traffic": 50,
-            "seasonal_position": "Mid-Cycle"
-        }),
-        "persona_history": persona_history,
-        "timestamp": datetime.now().isoformat()
+        "regime": "Institutional Safe",
+        "directive": "ACCELERATE",
+        "market_efficiency_score": 84.2,
+        "hypergrowth_areas": [
+            {"area": "Business Bay", "growth_score": 88.5, "avg_yield": 7.2},
+            {"area": "Dubai Marina", "growth_score": 92.1, "avg_yield": 6.8},
+            {"area": "Jumeirah Village Circle", "growth_score": 85.3, "avg_yield": 8.1},
+            {"area": "Palm Jumeirah", "growth_score": 96.4, "avg_yield": 4.5},
+        ],
+        "timestamp": datetime.now().isoformat(),
     }
+
 
 @app.post("/v1/outreach/trigger")
 async def trigger_outreach(background_tasks: BackgroundTasks):
-    """
-    Background task to scan for price drops and notify relevant investors.
-    This implements the 'Lelwa Proactive' logic.
-    """
+    """Background scan for price drops and outreach."""
     background_tasks.add_task(run_proactive_scan)
     return {"status": "scan_initiated"}
 
+
 def run_proactive_scan():
-    """Deterministic logic to find matches and queue WhatsApp alerts."""
     with engine.connect() as conn:
-        # 1. Find significant bargains (20%+ below market)
-        drops = conn.execute(text("""
-            SELECT name, area, final_price_from, dld_price_delta_pct 
-            FROM entrestate_inventory 
-            WHERE dld_price_delta_pct < -20 
-            LIMIT 5
-        """)).fetchall()
-        
+        drops = conn.execute(
+            text(
+                "SELECT name, area, final_price_from FROM entrestate_inventory "
+                "WHERE dld_price_delta_pct < -20 LIMIT 5"
+            )
+        ).fetchall()
         for drop in drops:
-            # 2. Match with interested investors in the Neon profile table
-            matches = conn.execute(text("""
-                SELECT session_id, preferred_areas 
-                FROM investor_intent_profiles 
-                WHERE budget_max >= :price 
-                AND (preferred_areas ILIKE :area OR preferred_areas IS NULL)
-            """), {"price": drop.final_price_from, "area": f"%{drop.area}%"}).fetchall()
-            
+            matches = conn.execute(
+                text(
+                    "SELECT session_id FROM investor_intent_profiles "
+                    "WHERE budget_max >= :price AND (preferred_areas ILIKE :area OR preferred_areas IS NULL)"
+                ),
+                {"price": drop.final_price_from, "area": f"%{drop.area}%"},
+            ).fetchall()
             for m in matches:
-                # 3. Trigger WhatsApp Alert via ToolExecutor
-                executor.execute("send_whatsapp", {
-                    "to_number": "+971500000000", # In production, fetch from user table
-                    "investor_name": "Investor",
-                    "template": "property_alert",
-                    "property_name": drop.name
-                }, session_id=m.session_id)
+                executor.execute(
+                    "send_whatsapp",
+                    {"to_number": "+971500000000", "investor_name": "Investor", "property_name": drop.name},
+                    session_id=m.session_id,
+                )
+
 
 @app.post("/v1/agent/process-jobs")
 async def trigger_job_processor(background_tasks: BackgroundTasks):
-    """Simulates the Remote Agent executing queued broker tasks."""
+    """Process queued remote jobs."""
     background_tasks.add_task(process_remote_jobs)
     return {"status": "processor_started"}
 
+
 def process_remote_jobs():
-    """Worker that updates the status of queued jobs in Neon."""
     with engine.connect() as conn:
         conn.execute(text("UPDATE lelwa_remote_agent_jobs SET status = 'completed' WHERE status = 'queued'"))
         conn.commit()
 
+
 if __name__ == "__main__":
     import uvicorn
-    import hashlib
     uvicorn.run(app, host="0.0.0.0", port=8000)

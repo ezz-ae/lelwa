@@ -556,8 +556,53 @@ class ToolExecutor:
                 "recommendation": "Focus on Capital Safe assets in Hypergrowth areas."
             }
 
+    # ── CHANNEL PREFLIGHT ─────────────────────────────────────────
+
+    def _preflight_whatsapp(self, args: dict) -> Optional[dict]:
+        """Returns preflight object if WhatsApp credentials are missing."""
+        if not all([
+            os.getenv("TWILIO_ACCOUNT_SID"),
+            os.getenv("TWILIO_AUTH_TOKEN"),
+            os.getenv("TWILIO_WHATSAPP_FROM"),
+        ]):
+            return {
+                "requires_connection": True,
+                "channel": "whatsapp",
+                "prompt": "Which number should send messages?",
+                "fields": [
+                    {"key": "account_sid", "type": "text", "label": "Twilio Account SID"},
+                    {"key": "auth_token", "type": "password", "label": "Twilio Auth Token"},
+                    {"key": "from_number", "type": "tel", "label": "WhatsApp sender number (e.g. +14155238886)"},
+                ],
+                "resume": {"tool_name": "send_whatsapp", "args": args},
+            }
+        return None
+
+    def _preflight_voice(self, args: dict) -> Optional[dict]:
+        """Returns preflight object if voice credentials are missing."""
+        if not all([
+            os.getenv("TWILIO_ACCOUNT_SID"),
+            os.getenv("TWILIO_AUTH_TOKEN"),
+            os.getenv("TWILIO_VOICE_FROM"),
+        ]):
+            return {
+                "requires_connection": True,
+                "channel": "voice",
+                "prompt": "Which number should place the call?",
+                "fields": [
+                    {"key": "account_sid", "type": "text", "label": "Twilio Account SID"},
+                    {"key": "auth_token", "type": "password", "label": "Twilio Auth Token"},
+                    {"key": "from_number", "type": "tel", "label": "Caller number (e.g. +971XXXXXXXXX)"},
+                ],
+                "resume": {"tool_name": "call_investor", "args": args},
+            }
+        return None
+
     def tool_send_whatsapp(self, args: dict, session_id: str):
         """Delivers messages and PDFs via Twilio WhatsApp API."""
+        preflight = self._preflight_whatsapp(args)
+        if preflight:
+            return preflight
         client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
         to_number = args.get('to_number')
         media_url = args.get('media_url')
@@ -575,6 +620,9 @@ class ToolExecutor:
 
     def tool_call_investor(self, args: dict, session_id: str):
         """Places an automated voice call via Twilio TwiML."""
+        preflight = self._preflight_voice(args)
+        if preflight:
+            return preflight
         client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
         message = args.get('message', f"Hi {args.get('investor_name')}, this is Lelwa. I have a property update for you.")
         
