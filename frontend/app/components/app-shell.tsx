@@ -10,9 +10,11 @@ interface AppShellProps {
 
 export function AppShell({ children, className, mainClassName }: AppShellProps) {
   return (
-    <div className={cn("flex min-h-screen bg-background", className)}>
-      <Sidebar />
-      <main className={cn("flex-1 px-6 py-8 md:px-10", mainClassName)}>{children}</main>
+    <div className={cn("dark min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))]", className)}>
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <main className={cn("flex-1 overflow-hidden console-bg", mainClassName)}>{children}</main>
+      </div>
     </div>
   )
 }

@@ -41,38 +41,38 @@
 }
 
 .dark {
-  --background: 220 12% 8%;
-  --foreground: 220 12% 92%;
-  --card: 220 12% 12%;
-  --card-foreground: 220 12% 92%;
-  --popover: 220 12% 12%;
-  --popover-foreground: 220 12% 92%;
-  --primary: 214 78% 60%;
+  --background: 222 20% 8%;
+  --foreground: 220 20% 92%;
+  --card: 222 18% 12%;
+  --card-foreground: 220 20% 92%;
+  --popover: 222 18% 12%;
+  --popover-foreground: 220 20% 92%;
+  --primary: 160 62% 40%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 220 10% 20%;
-  --secondary-foreground: 220 12% 92%;
-  --muted: 220 8% 18%;
+  --secondary: 222 14% 16%;
+  --secondary-foreground: 220 20% 92%;
+  --muted: 220 10% 16%;
   --muted-foreground: 220 8% 65%;
-  --accent: 220 10% 16%;
-  --accent-foreground: 220 12% 92%;
-  --destructive: 0 62.8% 30.6%;
+  --accent: 220 14% 18%;
+  --accent-foreground: 220 20% 92%;
+  --destructive: 0 68% 44%;
   --destructive-foreground: 0 0% 98%;
-  --border: 220 8% 20%;
-  --input: 220 8% 18%;
-  --ring: 214 78% 60%;
-  --chart-1: 214 78% 60%;
-  --chart-2: 197 75% 55%;
-  --chart-3: 159 68% 50%;
-  --chart-4: 38 90% 58%;
-  --chart-5: 2 80% 60%;
-  --sidebar-background: 220 18% 10%;
-  --sidebar-foreground: 220 12% 92%;
-  --sidebar-primary: 220 12% 92%;
-  --sidebar-primary-foreground: 220 18% 10%;
-  --sidebar-accent: 220 16% 16%;
-  --sidebar-accent-foreground: 220 12% 92%;
+  --border: 220 10% 20%;
+  --input: 220 10% 18%;
+  --ring: 160 62% 44%;
+  --chart-1: 160 62% 44%;
+  --chart-2: 197 70% 55%;
+  --chart-3: 40 85% 55%;
+  --chart-4: 0 65% 56%;
+  --chart-5: 210 60% 52%;
+  --sidebar-background: 222 18% 9%;
+  --sidebar-foreground: 220 20% 92%;
+  --sidebar-primary: 220 20% 92%;
+  --sidebar-primary-foreground: 222 18% 10%;
+  --sidebar-accent: 220 16% 14%;
+  --sidebar-accent-foreground: 220 20% 92%;
   --sidebar-border: 220 12% 18%;
-  --sidebar-ring: 220 12% 70%;
+  --sidebar-ring: 160 62% 44%;
 }
 
 @layer utilities {
@@ -82,6 +82,12 @@
   .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
+  }
+  .console-bg {
+    background-image:
+      radial-gradient(1200px 600px at 10% -10%, rgba(34, 197, 94, 0.16), transparent 55%),
+      radial-gradient(1000px 500px at 85% -15%, rgba(56, 189, 248, 0.15), transparent 60%),
+      linear-gradient(180deg, rgba(9, 10, 14, 0.92) 0%, rgba(9, 10, 14, 0.98) 55%, rgba(9, 10, 14, 1) 100%);
   }
 }
 

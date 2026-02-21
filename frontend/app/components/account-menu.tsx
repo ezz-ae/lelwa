@@ -60,14 +60,14 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
-      <div className="fixed bottom-20 left-4 z-50 w-72 overflow-hidden rounded-xl border border-border/60 bg-white shadow-2xl shadow-black/10 animate-in fade-in slide-in-from-bottom-2 duration-200">
-        <div className="border-b border-border/60 px-4 py-3.5">
+      <div className="fixed bottom-20 left-4 z-50 w-72 overflow-hidden rounded-xl border border-white/10 bg-[hsl(var(--card))] shadow-2xl shadow-black/40 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="border-b border-white/10 px-4 py-3.5">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-foreground">
               L
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">Lelwa User</p>
+              <p className="truncate text-sm font-semibold text-foreground">Lelwa</p>
               <p className="truncate text-[11px] text-muted-foreground">Active · Dubai</p>
             </div>
           </div>
@@ -76,8 +76,8 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
         <div className="p-1.5">
           {menuSections.map((section, si) => (
             <div key={section.label}>
-              {si > 0 && <div className="my-1 border-t border-border/40" />}
-              <p className="px-2.5 pb-1 pt-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground/50">
+              {si > 0 && <div className="my-1 border-t border-white/10" />}
+              <p className="px-2.5 pb-1 pt-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground/60">
                 {section.label}
               </p>
               {section.items.map((item) => {
@@ -90,7 +90,7 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
                       if (href) navigate(href)
                       else onClose()
                     }}
-                    className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                    className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-foreground/80 transition-colors hover:bg-white/5 hover:text-foreground"
                   >
                     <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span>{item.label}</span>
@@ -100,7 +100,7 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
             </div>
           ))}
 
-          <div className="my-1 border-t border-border/40" />
+          <div className="my-1 border-t border-white/10" />
 
           <button
             onClick={handleLogout}

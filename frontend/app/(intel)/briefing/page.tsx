@@ -62,7 +62,7 @@ export default function BriefingPage() {
   const allReady = checks.every((c) => c.done)
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8">
+    <div className="mx-auto w-full max-w-6xl space-y-8 px-6 py-6">
       {/* Header */}
       <div>
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Prepared</p>
@@ -90,7 +90,7 @@ export default function BriefingPage() {
         ].map((item) => (
           <Card
             key={item.label}
-            className="border-border/70 bg-white/80 shadow-sm"
+            className="border-white/10 bg-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]"
           >
             <CardContent className="py-5">
               <h3 className="text-sm font-semibold text-foreground">{item.label}</h3>
@@ -101,7 +101,7 @@ export default function BriefingPage() {
       </div>
 
       {/* Readiness checklist */}
-      <Card className="border-border/70 bg-white/80 shadow-sm">
+      <Card className="border-white/10 bg-white/5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
         <CardContent className="py-5">
           <p className="mb-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">Readiness</p>
           <ul className="space-y-3">

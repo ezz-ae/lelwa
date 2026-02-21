@@ -45,105 +45,109 @@ export default function ConnectPage() {
 
   return (
     <>
-      <div className="space-y-8">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Channels</p>
-          <h2 className="font-display text-3xl text-foreground">Configure outreach channels</h2>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Connect each channel once. Credentials are stored locally and never shared.
-          </p>
-        </div>
+      <div className="flex min-h-screen flex-col">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/20 px-6 py-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground">Channels</p>
+            <h2 className="mt-1 text-lg font-semibold text-foreground">Configure channels</h2>
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+              Connect each channel once. Credentials are stored locally and never shared.
+            </p>
+          </div>
+        </header>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          {CHANNELS.map((ch) => {
-            const isConnected = connected.has(ch.id)
-            const isUnavailable = ch.status === "unavailable"
-            const canConnect = !isUnavailable && ch.fields.length > 0
-            const statusLabel = isConnected ? "Done" : isUnavailable ? "Unavailable" : "Not connected"
+        <div className="flex flex-1 flex-col gap-6 px-6 py-6">
+          <div className="grid gap-3 md:grid-cols-2">
+            {CHANNELS.map((ch) => {
+              const isConnected = connected.has(ch.id)
+              const isUnavailable = ch.status === "unavailable"
+              const canConnect = !isUnavailable && ch.fields.length > 0
+              const statusLabel = isConnected ? "Done" : isUnavailable ? "Unavailable" : "Not connected"
 
-            return (
-              <Card
-                key={ch.id}
-                className={`border bg-gradient-to-br from-white/10 via-white/5 to-transparent transition-colors hover:bg-white/[0.07] ${ch.accentColor} ${ch.bgAccent}`}
-              >
-                <CardContent className="flex items-center justify-between gap-4 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-sm font-bold ${ch.iconColor} ${isUnavailable ? "opacity-40" : ""}`}>
-                      {ch.iconLabel}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-semibold text-foreground">{ch.title}</h3>
-                        <Badge
-                          variant="outline"
-                          className={`py-0 text-[10px] ${
-                            isConnected
-                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                              : isUnavailable
-                                ? "text-muted-foreground/60"
-                                : "border-border/60 text-muted-foreground"
-                          }`}
-                        >
-                          {statusLabel}
-                        </Badge>
+              return (
+                <Card
+                  key={ch.id}
+                  className={`border border-white/10 bg-white/5 transition-colors hover:bg-white/10 ${ch.accentColor} ${ch.bgAccent}`}
+                >
+                  <CardContent className="flex items-center justify-between gap-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 text-sm font-bold ${ch.iconColor} ${isUnavailable ? "opacity-40" : ""}`}>
+                        {ch.iconLabel}
                       </div>
-                      <p className={`mt-0.5 text-xs ${isUnavailable ? "text-muted-foreground/40" : "text-muted-foreground"}`}>
-                        {ch.detail}
-                      </p>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-foreground">{ch.title}</h3>
+                          <Badge
+                            variant="outline"
+                            className={`py-0 text-[10px] ${
+                              isConnected
+                                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                                : isUnavailable
+                                  ? "text-muted-foreground/60"
+                                  : "border-white/10 text-muted-foreground"
+                            }`}
+                          >
+                            {statusLabel}
+                          </Badge>
+                        </div>
+                        <p className={`mt-0.5 text-xs ${isUnavailable ? "text-muted-foreground/40" : "text-muted-foreground"}`}>
+                          {ch.detail}
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  {isConnected ? (
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10">
-                      <Check className="h-3.5 w-3.5 text-emerald-400" />
-                    </div>
-                  ) : canConnect ? (
-                    <Button
-                      className="shrink-0 rounded-full"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setSheet({ open: true, channel: ch })}
-                    >
-                      Connect
-                    </Button>
-                  ) : (
-                    <Button
-                      className="shrink-0 rounded-full opacity-40"
-                      size="sm"
-                      variant="outline"
-                      disabled
-                    >
-                      Unavailable
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
+                    {isConnected ? (
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10">
+                        <Check className="h-3.5 w-3.5 text-emerald-200" />
+                      </div>
+                    ) : canConnect ? (
+                      <Button
+                        className="shrink-0 rounded-full border-white/10 bg-white/5 text-foreground hover:bg-white/10"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSheet({ open: true, channel: ch })}
+                      >
+                        Connect
+                      </Button>
+                    ) : (
+                      <Button
+                        className="shrink-0 rounded-full opacity-40"
+                        size="sm"
+                        variant="outline"
+                        disabled
+                      >
+                        Unavailable
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+
+          <Card className="border border-white/10 bg-white/5">
+            <CardContent className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-emerald-200">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Next</p>
+                  <h3 className="text-base font-semibold text-foreground">Open console</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Submit a lead. Execute reply, call, or offer from the console.
+                  </p>
+                </div>
+              </div>
+              <Button asChild className="shrink-0 rounded-full border-white/10 bg-white/5 text-foreground hover:bg-white/10" variant="outline">
+                <Link href="/studio">
+                  Open console
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
-
-        <Card className="border-border/60 bg-gradient-to-br from-white/10 via-white/5 to-transparent">
-          <CardContent className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-primary">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Next</p>
-                <h3 className="text-base font-semibold text-foreground">Open console</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Submit a lead. Execute reply, call, or offer from the console.
-                </p>
-              </div>
-            </div>
-            <Button asChild className="shrink-0 rounded-full">
-              <Link href="/studio">
-                Open console
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
       </div>
 
       <ConnectSheet

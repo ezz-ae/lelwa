@@ -110,12 +110,12 @@ export function ConnectSheet({
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-150 sm:items-center"
       onClick={(e) => e.target === e.currentTarget && !loading && onClose()}
     >
-      <div className="relative w-full max-w-md rounded-t-3xl border border-border/60 bg-card p-6 shadow-2xl shadow-black/40 animate-in slide-in-from-bottom-4 duration-200 sm:rounded-3xl">
+      <div className="relative w-full max-w-md rounded-t-3xl border border-white/10 bg-[hsl(var(--card))] p-6 shadow-2xl shadow-black/40 animate-in slide-in-from-bottom-4 duration-200 sm:rounded-3xl">
         {/* Close */}
         <button
           onClick={onClose}
           disabled={loading}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-border/50 bg-muted/40 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-40"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-muted-foreground transition hover:bg-white/10 hover:text-foreground disabled:opacity-40"
           aria-label="Close"
         >
           <X className="h-3.5 w-3.5" />
@@ -148,7 +148,7 @@ export function ConnectSheet({
                 onChange={(e) =>
                   setValues((prev) => ({ ...prev, [field.key]: e.target.value }))
                 }
-                className="w-full rounded-xl border border-border/60 bg-muted/30 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-border focus:outline-none transition disabled:opacity-50"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-white/20 focus:outline-none transition disabled:opacity-50"
               />
             </div>
           ))}

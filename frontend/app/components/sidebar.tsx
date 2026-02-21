@@ -29,11 +29,11 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="flex h-screen w-[88px] shrink-0 flex-col items-center justify-between border-r border-white/10 bg-[hsl(var(--sidebar-background))] py-4 text-[hsl(var(--sidebar-foreground))]">
+      <aside className="flex h-screen w-[72px] shrink-0 flex-col items-center justify-between border-r border-white/10 bg-[hsl(var(--sidebar-background))] py-4 text-[hsl(var(--sidebar-foreground))]">
         <div className="flex flex-col items-center gap-4">
           <Link
             href="/?preview=1"
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-white transition hover:bg-white/20"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-white transition hover:bg-white/15"
             aria-label="Go to home"
           >
             <Image src="/icon.svg" alt="Lelwa" width={22} height={22} className="object-contain" />
@@ -48,10 +48,10 @@ export function Sidebar() {
               window.localStorage.setItem("lelwa_session_id", freshId)
               window.location.href = "/studio"
             }}
-            className="flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[10px] font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
+            className="flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[10px] font-medium text-white/60 transition hover:bg-white/10 hover:text-white"
             aria-label="New session"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10">
               <Plus className="h-4 w-4" />
             </div>
             <span>New</span>
@@ -70,7 +70,7 @@ export function Sidebar() {
                     "group flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[10px] font-medium transition",
                     isActive
                       ? "bg-white/15 text-white"
-                      : "text-white/60 hover:bg-white/10 hover:text-white"
+                      : "text-white/55 hover:bg-white/10 hover:text-white"
                   )}
                 >
                   <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 group-hover:bg-white/10">
