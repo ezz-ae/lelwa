@@ -9,6 +9,50 @@ import pandas as pd
 from twilio.rest import Client
 from channels import get_channel_config
 
+
+def _schema_to_gemini(schema: dict) -> dict:
+    """
+    Convert JSON Schema (OpenAI-style) -> google.generativeai Schema dict.
+    Key rules:
+      - "type" becomes "type_"
+      - types must be UPPERCASE enum names: OBJECT, STRING, NUMBER, INTEGER, BOOLEAN, ARRAY
+    """
+    if not schema:
+        return {"type_": "OBJECT"}
+
+    t = schema.get("type", "object")
+    type_map = {
+        "object": "OBJECT",
+        "string": "STRING",
+        "number": "NUMBER",
+        "integer": "INTEGER",
+        "boolean": "BOOLEAN",
+        "array": "ARRAY",
+    }
+    gemini: dict = {"type_": type_map.get(t, "OBJECT")}
+
+    if "description" in schema and schema["description"]:
+        gemini["description"] = schema["description"]
+
+    if "enum" in schema and schema["enum"]:
+        gemini["enum"] = schema["enum"]
+
+    # properties
+    if t == "object":
+        props = schema.get("properties", {}) or {}
+        if props:
+            gemini["properties"] = {k: _schema_to_gemini(v) for k, v in props.items()}
+        req = schema.get("required", []) or []
+        if req:
+            gemini["required"] = req
+
+    # array items
+    if t == "array":
+        items = schema.get("items") or {}
+        gemini["items"] = _schema_to_gemini(items)
+
+    return gemini
+
 class ToolExecutor:
     """
     The bridge between LLM linguistic intent and the Neon deterministic spine.
@@ -19,8 +63,19 @@ class ToolExecutor:
         spec_path = os.path.join(os.path.dirname(__file__), 'entrestate_codex_spec_v1.json')
         with open(spec_path, 'r') as f:
             spec = json.load(f)
-            # Gemini expects bare function declarations, not OpenAI-style wrappers.
-            self.tool_definitions = [tool['function'] for tool in spec['tools']['definitions']]
+            # Gemini expects bare function declarations with Schema using type_ enums.
+            self.tool_definitions = []
+            manual_only = {"send_whatsapp", "call_investor"}
+            for tool in spec["tools"]["definitions"]:
+                function = tool.get("function", {})
+                if function.get("name") in manual_only:
+                    continue
+                params = function.get("parameters", {}) or {}
+                self.tool_definitions.append({
+                    "name": function.get("name"),
+                    "description": function.get("description", ""),
+                    "parameters": _schema_to_gemini(params),
+                })
 
     def get_tool_definitions(self):
         return self.tool_definitions
@@ -84,7 +139,7 @@ class ToolExecutor:
             dld_row = conn.execute(dld_query, {"area": f"%{args.get('area')}%"}).fetchone()
             
             if not row and not dld_row:
-                return {"error": "Area not found in intelligence database."}
+                return {"error": "Area not found in data set."}
             
             res = dict(row._mapping) if row else {}
             if dld_row:

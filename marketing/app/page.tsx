@@ -565,7 +565,7 @@ export default function LelwaMarketingPage() {
           <div className="text-center mb-16 md:mb-20">
             <div className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-[#86868b] mb-5 flex items-center justify-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#d4a853] animate-pulse" />
-              Workflow
+              Activity
             </div>
             <h2 className="font-serif text-[34px] leading-[1.12] md:text-[52px] font-medium text-balance">
               Three steps.{" "}

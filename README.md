@@ -75,7 +75,7 @@ cp .env.example .env
 # Twilio vars are optional — enter them in the UI when you first press Send/Call
 
 pip install -r requirements.txt
-python main.py
+python3 main.py
 # → http://localhost:8000
 ```
 

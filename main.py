@@ -32,6 +32,7 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 genai.configure(api_key=GEMINI_API_KEY)
 shield = SecurityShield()
 executor = ToolExecutor(engine)
+MANUAL_TOOL_NAMES = {"send_whatsapp", "call_investor"}
 
 os.makedirs("static", exist_ok=True)
 
@@ -177,6 +178,68 @@ def _parse_broker_response(raw: str) -> dict:
     }
 
 
+def _ensure_prepared_contract(structured: dict, message: str) -> dict:
+    """Guarantee reply + call_script blocks and basic actions exist."""
+    reply_text = structured.get("reply")
+    if not isinstance(reply_text, str):
+        reply_text = ""
+    reply_text = reply_text.strip()
+
+    blocks = structured.get("prepared_blocks")
+    if not isinstance(blocks, list):
+        blocks = []
+
+    actions = structured.get("prepared_actions")
+    if not isinstance(actions, list):
+        actions = []
+
+    def has_block(block_type: str) -> bool:
+        return any(isinstance(b, dict) and b.get("type") == block_type for b in blocks)
+
+    def has_action(tool_name: str) -> bool:
+        return any(isinstance(a, dict) and a.get("tool_name") == tool_name for a in actions)
+
+    if not reply_text:
+        reply_text = "Prepared reply ready."
+
+    if not has_block("reply"):
+        blocks.insert(0, {"type": "reply", "title": "Reply", "content": reply_text})
+
+    if not has_block("call_script"):
+        call_content = "Call the lead, confirm the request, budget, and next step."
+        blocks.append({"type": "call_script", "title": "Call script", "content": call_content})
+    else:
+        call_content = next(
+            (b.get("content", "") for b in blocks if isinstance(b, dict) and b.get("type") == "call_script"),
+            "",
+        )
+
+    if not has_action("send_whatsapp"):
+        seed = reply_text or message or "reply"
+        actions.append({
+            "id": f"send_whatsapp_{hashlib.md5(seed.encode()).hexdigest()[:8]}",
+            "label": "Send WhatsApp",
+            "tool_name": "send_whatsapp",
+            "args": {"to_number": "", "message_body": reply_text},
+            "requires": "connection",
+        })
+
+    if not has_action("call_investor"):
+        seed = call_content or reply_text or message or "call"
+        actions.append({
+            "id": f"call_investor_{hashlib.md5(seed.encode()).hexdigest()[:8]}",
+            "label": "Call lead",
+            "tool_name": "call_investor",
+            "args": {"to_number": "", "message": call_content},
+            "requires": "connection",
+        })
+
+    structured["reply"] = reply_text
+    structured["prepared_blocks"] = blocks
+    structured["prepared_actions"] = actions
+    return structured
+
+
 # ── ENDPOINTS ──────────────────────────────────────────────────────────────
 
 @app.post("/v1/chat")
@@ -226,9 +289,12 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         for part in response.candidates[0].content.parts:
             if hasattr(part, "function_call") and part.function_call.name:
                 call = part.function_call
-                result = executor.execute(
-                    call.name, dict(call.args), req.session_id, user_id=req.user_id
-                )
+                if call.name in MANUAL_TOOL_NAMES:
+                    result = {"status": "manual_action_required"}
+                else:
+                    result = executor.execute(
+                        call.name, dict(call.args), req.session_id, user_id=req.user_id
+                    )
                 if assessment.threat_level != "clear":
                     result = shield.degrade_response(result, assessment)
                 tool_responses.append(
@@ -245,7 +311,10 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         response = chat.send_message(genai.protos.Content(parts=tool_responses))
 
     raw_text = getattr(response, "text", "") or ""
-    structured = _parse_broker_response(raw_text)
+    structured = _ensure_prepared_contract(
+        _parse_broker_response(raw_text),
+        req.message,
+    )
 
     return {
         "reply": structured.get("reply", raw_text),
@@ -334,6 +403,10 @@ async def resume_action(req: ResumeRequest):
 
 
 # ── SUPPORTING ENDPOINTS ───────────────────────────────────────────────────
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
 
 @app.get("/v1/profile/{session_id}")
 async def get_profile(session_id: str):
@@ -441,9 +514,12 @@ async def websocket_chat(websocket: WebSocket, session_id: str):
                 for part in response.candidates[0].content.parts:
                     if hasattr(part, "function_call") and part.function_call.name:
                         call = part.function_call
-                        result = executor.execute(
-                            call.name, dict(call.args), session_id, user_id="default"
-                        )
+                        if call.name in MANUAL_TOOL_NAMES:
+                            result = {"status": "manual_action_required"}
+                        else:
+                            result = executor.execute(
+                                call.name, dict(call.args), session_id, user_id="default"
+                            )
                         tool_responses.append(
                             genai.protos.Part(
                                 function_response=genai.protos.FunctionResponse(
@@ -459,7 +535,10 @@ async def websocket_chat(websocket: WebSocket, session_id: str):
                 )
 
             raw_text = getattr(response, "text", "") or ""
-            structured = _parse_broker_response(raw_text)
+            structured = _ensure_prepared_contract(
+                _parse_broker_response(raw_text),
+                user_msg,
+            )
 
             await websocket.send_json({
                 "type": "result",

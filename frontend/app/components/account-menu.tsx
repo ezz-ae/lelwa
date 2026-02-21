@@ -3,17 +3,10 @@
 import { useRouter } from "next/navigation"
 import {
   User,
-  Settings,
-  ToggleLeft,
   Mail,
-  Keyboard,
-  Calendar,
-  Bell,
   Plug,
-  Gem,
-  Settings2,
-  Check,
-  HelpCircle,
+  Folder,
+  Clock,
   LogOut,
 } from "lucide-react"
 
@@ -26,33 +19,18 @@ const menuSections = [
   {
     label: "Account",
     items: [
-      { icon: User, label: "Account", href: "/activate" },
-      { icon: Settings2, label: "Preferences", href: "/activate" },
-      { icon: ToggleLeft, label: "Personalization", href: "/activate" },
-    ],
-  },
-  {
-    label: "Tools",
-    items: [
-      { icon: Keyboard, label: "Shortcuts", href: "/studio" },
-      { icon: Calendar, label: "Tasks", href: "/studio" },
-      { icon: Bell, label: "Notifications", href: "/briefing" },
-      { icon: Plug, label: "Connections", href: "/connect" },
+      { icon: User, label: "Console", href: "/studio" },
+      { icon: Clock, label: "Sessions", href: "/sessions" },
+      { icon: Folder, label: "Projects", href: "/projects" },
+      { icon: Plug, label: "Connect", href: "/connect" },
     ],
   },
   {
     label: "Support",
     items: [
       { icon: Mail, label: "Support", href: "mailto:hello@lelwa.com" },
-      { icon: Gem, label: "Packages", action: "upgrade" as const },
-      { icon: Settings, label: "All settings", href: "/connect" },
     ],
   },
-]
-
-const profiles = [
-  { name: "Lelwa User", initials: "L", active: true, gradient: "from-violet-500/40 to-indigo-500/30" },
-  { name: "Incognito", initials: "🕶️", active: false, gradient: "from-zinc-600/30 to-zinc-700/20" },
 ]
 
 export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
@@ -71,22 +49,21 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
 
   function handleLogout() {
     onClose()
+    window.localStorage.removeItem("lelwa_user_id")
     window.localStorage.removeItem("lelwa_session_id")
-    window.localStorage.removeItem("lelwa_strategy_profile")
-    window.localStorage.removeItem("lelwa_strategy_actions")
-    window.localStorage.removeItem("lelwa_login_contact")
-    router.push("/login")
+    window.localStorage.removeItem("lelwa_active_project")
+    window.localStorage.removeItem("lelwa_sessions")
+    router.push("/")
   }
 
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
-      <div className="fixed bottom-20 left-4 z-50 w-72 overflow-hidden rounded-xl border border-border/60 bg-background shadow-2xl shadow-black/30 animate-in fade-in slide-in-from-bottom-2 duration-200">
-        {/* User header */}
+      <div className="fixed bottom-20 left-4 z-50 w-72 overflow-hidden rounded-xl border border-border/60 bg-white shadow-2xl shadow-black/10 animate-in fade-in slide-in-from-bottom-2 duration-200">
         <div className="border-b border-border/60 px-4 py-3.5">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/40 to-indigo-500/30 text-sm font-bold text-foreground/90 ring-1 ring-white/10">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground">
               L
             </span>
             <div className="min-w-0">
@@ -96,7 +73,6 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
           </div>
         </div>
 
-        {/* Menu sections */}
         <div className="p-1.5">
           {menuSections.map((section, si) => (
             <div key={section.label}>
@@ -122,29 +98,6 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
                 )
               })}
             </div>
-          ))}
-
-          <div className="my-1 border-t border-border/40" />
-
-          {/* Profile switcher */}
-          {profiles.map((profile) => (
-            <button
-              key={profile.name}
-              onClick={onClose}
-              className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-accent"
-            >
-              <span
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold ring-1 ring-white/10 ${profile.gradient}`}
-              >
-                {profile.initials}
-              </span>
-              <span className="flex-1 text-left text-foreground/80">{profile.name}</span>
-              {profile.active ? (
-                <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
-              ) : (
-                <HelpCircle className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
-              )}
-            </button>
           ))}
 
           <div className="my-1 border-t border-border/40" />

@@ -17,12 +17,13 @@ import {
   MessageSquare,
   Paperclip,
   Phone,
-  Sparkles,
   X,
   Zap,
 } from "lucide-react"
-import { ActionId, actionThemeById, chatActions, getActionTheme } from "@/lib/lelwa-actions"
 import { ConnectSheet } from "@/app/components/connect-sheet"
+import { startActionById } from "@/lib/lelwa-actions"
+import { getProjectName } from "@/lib/project-store"
+import { loadFeed, upsertSession } from "@/lib/session-store"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -56,7 +57,6 @@ interface FeedEntry {
   // user
   content?: string
   attachments?: Attachment[]
-  tools?: string[]
   // work
   reply?: string
   prepared_blocks?: PreparedBlock[]
@@ -84,14 +84,14 @@ function isActionBlocked(action: PreparedAction) {
 
 const BLOCK_CFG: Record<
   PreparedBlock["type"],
-  { icon: React.ElementType; accent: string; bg: string; border: string }
+  { icon: React.ElementType; tone: string; bg: string; border: string }
 > = {
-  reply:       { icon: MessageSquare, accent: "text-sky-400",     bg: "rgba(14,165,233,0.08)",   border: "rgba(14,165,233,0.25)"   },
-  call_script: { icon: Phone,         accent: "text-violet-400",  bg: "rgba(139,92,246,0.08)",   border: "rgba(139,92,246,0.25)"   },
-  offer:       { icon: FileText,      accent: "text-amber-400",   bg: "rgba(245,158,11,0.08)",   border: "rgba(245,158,11,0.25)"   },
-  contract:    { icon: FileSignature, accent: "text-emerald-400", bg: "rgba(52,211,153,0.08)",   border: "rgba(52,211,153,0.25)"   },
-  followups:   { icon: Calendar,      accent: "text-orange-400",  bg: "rgba(251,146,60,0.08)",   border: "rgba(251,146,60,0.25)"   },
-  summary:     { icon: BarChart3,     accent: "text-slate-400",   bg: "rgba(148,163,184,0.07)",  border: "rgba(148,163,184,0.20)"  },
+  reply:       { icon: MessageSquare, tone: "text-blue-700",   bg: "bg-blue-50",    border: "border-blue-100" },
+  call_script: { icon: Phone,         tone: "text-amber-700",  bg: "bg-amber-50",   border: "border-amber-100" },
+  offer:       { icon: FileText,      tone: "text-rose-700",   bg: "bg-rose-50",    border: "border-rose-100" },
+  contract:    { icon: FileSignature, tone: "text-emerald-700",bg: "bg-emerald-50", border: "border-emerald-100" },
+  followups:   { icon: Calendar,      tone: "text-indigo-700", bg: "bg-indigo-50", border: "border-indigo-100" },
+  summary:     { icon: BarChart3,     tone: "text-slate-600",  bg: "bg-slate-50",  border: "border-slate-100" },
 }
 
 function formatFileSize(b: number) {
@@ -99,8 +99,15 @@ function formatFileSize(b: number) {
   if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`
   return `${(b / (1024 * 1024)).toFixed(1)} MB`
 }
+
 function formatTime(d: Date) {
   return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
+}
+
+function toSessionTitle(text: string) {
+  const cleaned = text.replace(/\s+/g, " ").trim()
+  if (!cleaned) return "Session"
+  return cleaned.length > 56 ? `${cleaned.slice(0, 56)}…` : cleaned
 }
 
 // ── Block Card ─────────────────────────────────────────────────────────────
@@ -109,16 +116,18 @@ function BlockCard({ block }: { block: PreparedBlock }) {
   const [copied, setCopied] = useState(false)
   const cfg = BLOCK_CFG[block.type] ?? BLOCK_CFG.summary
   return (
-    <div className="group relative rounded-2xl p-4" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+    <div className={`group rounded-2xl border ${cfg.border} ${cfg.bg} p-4`}>
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <cfg.icon className={`h-3.5 w-3.5 shrink-0 ${cfg.accent}`} />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">{block.title}</span>
+          <cfg.icon className={`h-3.5 w-3.5 shrink-0 ${cfg.tone}`} />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+            {block.title}
+          </span>
         </div>
         <button
           type="button"
           onClick={async () => { await navigator.clipboard.writeText(block.content); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
-          className="flex items-center gap-1 rounded-full border border-border/40 bg-muted/30 px-2 py-0.5 text-[10px] text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:bg-muted hover:text-foreground"
+          className="flex items-center gap-1 rounded-full border border-border/40 bg-white/70 px-2 py-0.5 text-[10px] text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:bg-white"
         >
           {copied ? <Check className="h-2.5 w-2.5" /> : <ClipboardCopy className="h-2.5 w-2.5" />}
           {copied ? "Copied" : "Copy"}
@@ -144,10 +153,10 @@ function ActionButton({
 }) {
   if (blocked) {
     return (
-      <div className="flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/80">
+      <div className="flex items-center gap-2 rounded-full border border-border/60 bg-white/80 px-3 py-1.5 text-xs font-medium text-muted-foreground/80">
         <span>{action.label}</span>
-        <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-amber-400/80">
-          Needs number
+        <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-amber-500">
+          Unavailable
         </span>
       </div>
     )
@@ -156,20 +165,23 @@ function ActionButton({
     <div className="flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive/80">
       <span>{action.label}</span>
       <span className="rounded-full border border-destructive/40 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-destructive/70">
-        Failed
+        Unavailable
       </span>
     </div>
   )
   if (state === "done") return (
-    <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400">
+    <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600">
       <Check className="h-3 w-3" /> {action.label}
     </div>
   )
   if (state === "confirm") return (
     <div className="flex items-center gap-1.5">
       <span className="text-xs text-muted-foreground">Confirm</span>
-      <button type="button" onClick={onConfirm}
-        className="rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-400 transition hover:bg-amber-500/25">
+      <button
+        type="button"
+        onClick={onConfirm}
+        className="rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-600 transition hover:bg-amber-500/25"
+      >
         Confirm
       </button>
     </div>
@@ -179,10 +191,10 @@ function ActionButton({
       type="button"
       disabled={state === "loading"}
       onClick={action.requires === "connection" ? onConnect : action.requires === "confirmation" ? onExecute : onExecute}
-      className="flex items-center gap-1.5 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5 text-xs font-medium text-foreground/80 transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+      className="flex items-center gap-1.5 rounded-full border border-border/60 bg-white/80 px-3 py-1.5 text-xs font-medium text-foreground/80 transition hover:bg-white disabled:opacity-50"
     >
       {state === "loading" ? <Loader2 className="h-3 w-3 animate-spin" />
-        : action.requires === "connection" ? <Zap className="h-3 w-3 text-amber-400" />
+        : action.requires === "connection" ? <Zap className="h-3 w-3 text-amber-500" />
         : <ArrowUp className="h-3 w-3" />}
       {action.label}
     </button>
@@ -203,7 +215,7 @@ function WorkCard({ entry, onActionClick, onConfirmAction, onConnectRequired }: 
   const results = entry.actionResults ?? {}
 
   return (
-    <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="w-full">
       {blocks.length > 0 && (
         <div className="mb-3 space-y-2.5">{blocks.map((b, i) => <BlockCard key={i} block={b} />)}</div>
       )}
@@ -233,23 +245,92 @@ function WorkCard({ entry, onActionClick, onConfirmAction, onConnectRequired }: 
                   href={results[action.id].pdf_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-400 transition hover:bg-amber-500/20"
+                  className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-600 transition hover:bg-amber-500/20"
                 >
-                  ↓ Download PDF
+                  Download PDF
                 </a>
               )}
             </div>
           ))}
         </div>
       )}
-      <div className="mt-2 text-[10px] text-muted-foreground/40">{formatTime(entry.timestamp)}</div>
+      <div className="mt-2 text-[10px] text-muted-foreground/60">{formatTime(entry.timestamp)}</div>
+    </div>
+  )
+}
+
+// ── Prepared Canvas ────────────────────────────────────────────────────────
+
+function PreparedCanvas({
+  entry,
+  onActionClick,
+  onConfirmAction,
+  onConnectRequired,
+}: {
+  entry: FeedEntry | null
+  onActionClick: (entryId: string, action: PreparedAction) => void
+  onConfirmAction: (entryId: string, actionId: string) => void
+  onConnectRequired: (entryId: string, action: PreparedAction) => void
+}) {
+  if (!entry) {
+    return (
+      <div className="rounded-3xl border border-border/70 bg-white/80 p-5 text-sm text-muted-foreground shadow-sm">
+        Prepared blocks appear after the first message.
+      </div>
+    )
+  }
+
+  const blocks = entry.prepared_blocks ?? []
+  const actions = entry.prepared_actions ?? []
+  const states = entry.actionState ?? {}
+
+  return (
+    <div className="rounded-3xl border border-border/70 bg-white/80 p-5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Prepared</p>
+          <h2 className="mt-1 text-base font-semibold text-foreground">Canvas</h2>
+        </div>
+        <span className="rounded-full border border-border/60 bg-white/70 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          Ready
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {blocks.map((block, index) => (
+          <BlockCard key={`${block.type}-${index}`} block={block} />
+        ))}
+      </div>
+
+      {actions.length > 0 && (
+        <div className="mt-5">
+          <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Action</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {actions.map((action) => (
+              <ActionButton
+                key={action.id}
+                action={action}
+                state={states[action.id] ?? "idle"}
+                blocked={isActionBlocked(action)}
+                onExecute={() => {
+                  if (action.requires === "confirmation" && states[action.id] !== "confirm") {
+                    onActionClick(entry.id, action)
+                  } else {
+                    onConfirmAction(entry.id, action.id)
+                  }
+                }}
+                onConfirm={() => onConfirmAction(entry.id, action.id)}
+                onConnect={() => onConnectRequired(entry.id, action)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 // ── Main page ──────────────────────────────────────────────────────────────
-
-const toolOptions = chatActions
 
 export default function StudioPage() {
   const searchParams = useSearchParams()
@@ -257,9 +338,9 @@ export default function StudioPage() {
   const [isSending, setIsSending] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [feed, setFeed] = useState<FeedEntry[]>([])
-  const [activeTools, setActiveTools] = useState<string[]>([])
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [healthStatus, setHealthStatus] = useState<"unknown" | "done" | "unavailable">("unknown")
+  const [projectName, setProjectName] = useState<string | null>(null)
 
   // Connect sheet state — includes resume_token for automatic retry
   const [connectSheet, setConnectSheet] = useState<{
@@ -273,13 +354,32 @@ export default function StudioPage() {
   const feedEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const actionFromUrl = searchParams.get("action")
-  const primaryAction = actionFromUrl && actionThemeById[actionFromUrl as ActionId] ? actionFromUrl
-    : activeTools[activeTools.length - 1] ?? null
-  const activeTheme = getActionTheme(primaryAction)
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+  const actionParam = searchParams.get("action") ?? searchParams.get("start")
+  const promptParam = searchParams.get("prompt")
+  const sessionParam = searchParams.get("session")
+  const projectParam = searchParams.get("project")
 
-  useEffect(() => { feedEndRef.current?.scrollIntoView({ behavior: "smooth" }) }, [feed, isSending])
+  useEffect(() => {
+    feedEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [feed, isSending])
+
+  useEffect(() => {
+    const existingUser = window.localStorage.getItem("lelwa_user_id")
+    if (!existingUser) {
+      window.localStorage.setItem("lelwa_user_id", `user_${crypto.randomUUID()}`)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (projectParam) {
+      window.localStorage.setItem("lelwa_active_project", projectParam)
+      setProjectName(getProjectName(projectParam))
+      return
+    }
+    const storedProject = window.localStorage.getItem("lelwa_active_project")
+    setProjectName(getProjectName(storedProject))
+  }, [projectParam])
 
   useEffect(() => {
     let cancelled = false
@@ -301,45 +401,57 @@ export default function StudioPage() {
 
   // Session init + feed hydration from localStorage
   useEffect(() => {
-    const stored = window.localStorage.getItem("lelwa_session_id")
-    const activeId = stored ?? `lelwa_${crypto.randomUUID()}`
-    if (!stored) window.localStorage.setItem("lelwa_session_id", activeId)
+    let activeId = sessionParam || window.localStorage.getItem("lelwa_session_id")
+    const forceNew = Boolean(actionParam) && !sessionParam
+
+    if (forceNew) {
+      activeId = `lelwa_${crypto.randomUUID()}`
+      window.localStorage.setItem("lelwa_session_id", activeId)
+      setFeed([])
+    } else if (!activeId) {
+      activeId = `lelwa_${crypto.randomUUID()}`
+      window.localStorage.setItem("lelwa_session_id", activeId)
+    }
+
+    if (sessionParam) {
+      window.localStorage.setItem("lelwa_session_id", sessionParam)
+    }
+
     setSessionId(activeId)
 
-    // Restore feed for this session (survives page refresh)
-    try {
-      const raw = window.localStorage.getItem(`lelwa_feed_${activeId}`)
-      if (raw) {
-        const parsed = JSON.parse(raw) as FeedEntry[]
-        // Rehydrate Date objects (JSON serialises them as strings)
-        setFeed(parsed.map((e) => ({ ...e, timestamp: new Date(e.timestamp) })))
+    if (!forceNew && activeId) {
+      try {
+        const rawFeed = loadFeed(activeId) as FeedEntry[]
+        if (rawFeed.length) {
+          setFeed(rawFeed.map((e) => ({ ...e, timestamp: new Date(e.timestamp) })))
+        }
+      } catch {
+        // ignore malformed storage
       }
-    } catch { /* ignore malformed storage */ }
-  }, [])
+    }
+  }, [sessionParam, actionParam])
+
+  useEffect(() => {
+    if (input.trim()) return
+    if (promptParam) {
+      setInput(promptParam)
+      return
+    }
+    if (actionParam && startActionById[actionParam as keyof typeof startActionById]) {
+      setInput(startActionById[actionParam as keyof typeof startActionById].prompt)
+    }
+  }, [promptParam, actionParam, input])
 
   // Persist feed to localStorage whenever it changes
   useEffect(() => {
     if (!sessionId || feed.length === 0) return
     try {
-      // Keep only the last 50 entries to cap storage usage
       const toStore = feed.slice(-50)
       window.localStorage.setItem(`lelwa_feed_${sessionId}`, JSON.stringify(toStore))
-    } catch { /* quota exceeded — skip */ }
+    } catch {
+      // quota exceeded — skip
+    }
   }, [feed, sessionId])
-
-  useEffect(() => {
-    const s = window.localStorage.getItem("lelwa_strategy_actions")
-    if (s) { try { const p = JSON.parse(s) as string[]; setActiveTools(Array.isArray(p) ? p : []) } catch { setActiveTools([]) } }
-  }, [])
-
-  useEffect(() => {
-    if (!actionFromUrl) return
-    setActiveTools((prev) => prev.includes(actionFromUrl) ? prev : [...prev, actionFromUrl])
-  }, [actionFromUrl])
-
-  useEffect(() => {
-    window.localStorage.setItem("lelwa_strategy_actions", JSON.stringify(activeTools))
-  }, [activeTools])
 
   // ── Action state helpers ───────────────────────────────────────
 
@@ -373,7 +485,6 @@ export default function StudioPage() {
       const data = await res.json()
 
       if (data?.requires_connection) {
-        // Tool needs a channel — open ConnectSheet with the resume_token
         setActionState(entryId, action.id, "idle")
         setConnectSheet({
           open: true,
@@ -383,20 +494,18 @@ export default function StudioPage() {
             channel: data.channel,
             prompt: data.prompt,
             fields: data.fields ?? [],
-            resume_token: data.resume_token,   // backend-generated, single-use
+            resume_token: data.resume_token,
           },
         })
         return
       }
 
-      // Application-level error (e.g. Twilio rejected, invalid credentials)
       if (data?.error) {
         setActionState(entryId, action.id, "error")
         setTimeout(() => setActionState(entryId, action.id, "idle"), 5000)
         return
       }
 
-      // Store any PDF URL returned by document generation tools
       if (data?.pdf_url) {
         setFeed((prev) => prev.map((e) =>
           e.id === entryId
@@ -407,7 +516,6 @@ export default function StudioPage() {
 
       setActionState(entryId, action.id, "done")
     } catch {
-      // Network-level error
       setActionState(entryId, action.id, "error")
       setTimeout(() => setActionState(entryId, action.id, "idle"), 5000)
     }
@@ -419,8 +527,6 @@ export default function StudioPage() {
   }
 
   function handleConnectRequired(entryId: string, action: PreparedAction) {
-    // Opened from the action button — no resume_token yet (we need to hit the tool first)
-    // So we call executeAction which will trigger the flow above
     executeAction(entryId, action)
   }
 
@@ -429,10 +535,7 @@ export default function StudioPage() {
     setConnectSheet({ open: false, entryId: "", action: null, requirement: null })
 
     if (resumeResult?.status === "executed" && action) {
-      // Resume succeeded — mark action as done
       setActionState(entryId, action.id, "done")
-    } else if (action) {
-      // No resume (proactive connect from connect page) — no action to update
     }
   }
 
@@ -443,13 +546,9 @@ export default function StudioPage() {
     const hasAttachments = attachments.length > 0
     if ((trimmed.length === 0 && !hasAttachments) || isSending) return
 
-    const selectedToolLabels = activeTools
-      .map((id) => toolOptions.find((t) => t.id === id)?.label)
-      .filter((l): l is string => Boolean(l))
-    const toolSummary = selectedToolLabels.length ? `Actions: ${selectedToolLabels.join(", ")}` : ""
     const attachmentSummary = hasAttachments ? `Attachments: ${attachments.map((f) => f.name).join(", ")}` : ""
     const fallbackMsg = trimmed.length ? trimmed : "Shared attachments."
-    const outbound = [fallbackMsg, attachmentSummary, toolSummary].filter(Boolean).join("\n\n")
+    const outbound = [fallbackMsg, attachmentSummary].filter(Boolean).join("\n\n")
 
     const userEntry: FeedEntry = {
       id: Date.now().toString(),
@@ -457,7 +556,6 @@ export default function StudioPage() {
       content: fallbackMsg,
       timestamp: new Date(),
       attachments: hasAttachments ? attachments : undefined,
-      tools: selectedToolLabels.length ? selectedToolLabels : undefined,
     }
 
     setFeed((prev) => [...prev, userEntry])
@@ -467,7 +565,17 @@ export default function StudioPage() {
     if (textareaRef.current) textareaRef.current.style.height = "auto"
 
     const activeSessionId = sessionId || `lelwa_${crypto.randomUUID()}`
-    if (!sessionId) { window.localStorage.setItem("lelwa_session_id", activeSessionId); setSessionId(activeSessionId) }
+    if (!sessionId) {
+      window.localStorage.setItem("lelwa_session_id", activeSessionId)
+      setSessionId(activeSessionId)
+    }
+
+    upsertSession({
+      id: activeSessionId,
+      title: toSessionTitle(fallbackMsg),
+      lastMessage: fallbackMsg,
+      updatedAt: new Date().toISOString(),
+    })
 
     try {
       const res = await fetch(`${apiBase}/v1/chat`, {
@@ -490,17 +598,45 @@ export default function StudioPage() {
         ),
       }
       setFeed((prev) => [...prev, workEntry])
+
+      upsertSession({
+        id: activeSessionId,
+        lastReply: data.reply,
+        updatedAt: new Date().toISOString(),
+      })
     } catch {
+      const fallbackReply = "Prepared reply ready."
+      const fallbackCall = "Call the lead, confirm the request, budget, and next step."
+      const fallbackActions: PreparedAction[] = [
+        {
+          id: `send_whatsapp_${Date.now()}`,
+          label: "Send WhatsApp",
+          tool_name: "send_whatsapp",
+          args: { to_number: "", message_body: fallbackReply },
+          requires: "connection",
+        },
+        {
+          id: `call_investor_${Date.now() + 1}`,
+          label: "Call lead",
+          tool_name: "call_investor",
+          args: { to_number: "", message: fallbackCall },
+          requires: "connection",
+        },
+      ]
+
       setFeed((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           type: "work",
           timestamp: new Date(),
-          reply: "Connection error. Check your network and try again.",
-          prepared_blocks: [],
-          prepared_actions: [],
-          actionState: {},
+          reply: fallbackReply,
+          prepared_blocks: [
+            { type: "reply", title: "Reply", content: fallbackReply },
+            { type: "call_script", title: "Call script", content: fallbackCall },
+          ],
+          prepared_actions: fallbackActions,
+          actionState: Object.fromEntries(fallbackActions.map((a) => [a.id, "idle"])),
         },
       ])
     } finally {
@@ -513,210 +649,197 @@ export default function StudioPage() {
   const canSend = (input.trim().length > 0 || attachments.length > 0) && !isSending
 
   const composer = (
-    <div className="relative mx-auto w-full max-w-3xl">
-      <div
-        className="pointer-events-none absolute -inset-x-6 -bottom-6 h-16 rounded-full blur-2xl opacity-50"
-        style={{ background: `linear-gradient(120deg, ${activeTheme.glow[0]}, ${activeTheme.glow[1]})` }}
-      />
-      <div className="rounded-[28px] p-[1px]" style={{ background: `linear-gradient(135deg, ${activeTheme.stroke[0]}, ${activeTheme.stroke[1]})` }}>
-        <div className="rounded-[27px] border border-white/5 bg-gradient-to-br from-white/10 via-white/5 to-transparent px-4 pt-3 pb-3 shadow-[0_22px_60px_-50px_rgba(0,0,0,0.65)]">
-          <div className="flex items-start gap-3">
-            <Button type="button" variant="ghost" size="icon" aria-label="Attach file"
-              onClick={() => fileInputRef.current?.click()}
-              className="mt-1 h-8 w-8 shrink-0 rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground">
-              <Paperclip className="h-3.5 w-3.5" />
-            </Button>
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value)
-                const el = e.target; el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 200)}px`
-              }}
-              placeholder="Lead, listing, or request."
-              className="min-h-[48px] max-h-[200px] flex-1 resize-none border-none bg-transparent px-0 py-2 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0"
-              onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSend() } }}
-              disabled={isSending}
-              rows={1}
-            />
-            <Button onClick={handleSend} size="icon" aria-label="Send" disabled={!canSend}
-              className="mt-1 h-8 w-8 shrink-0 rounded-full border-0 transition-all"
-              style={canSend ? { background: `linear-gradient(135deg, ${activeTheme.stroke[0]}, ${activeTheme.stroke[1]})`, boxShadow: `0 4px 16px -4px ${activeTheme.glow[0]}`, color: "white" } : undefined}>
-              {isSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowUp className="h-3.5 w-3.5" />}
-            </Button>
-          </div>
-
-          {attachments.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5 pl-11">
-              {attachments.map((file) => (
-                <div key={file.id} className="flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[11px] text-foreground">
-                  <Paperclip className="h-2.5 w-2.5 shrink-0 text-muted-foreground" />
-                  <span className="max-w-[120px] truncate">{file.name}</span>
-                  <span className="text-muted-foreground/60">{formatFileSize(file.size)}</span>
-                  <button type="button" onClick={() => setAttachments((p) => p.filter((f) => f.id !== file.id))}
-                    className="ml-0.5 text-muted-foreground hover:text-foreground" aria-label={`Remove ${file.name}`}>
-                    <X className="h-2.5 w-2.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border/40 pt-3">
-            <span className="mr-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">Actions</span>
-            {toolOptions.map((tool) => {
-              const isActive = activeTools.includes(tool.id)
-              return (
-                <button key={tool.id} type="button"
-                  onClick={() => setActiveTools((prev) => prev.includes(tool.id) ? prev.filter((t) => t !== tool.id) : [...prev, tool.id])}
-                  className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-all duration-150 ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  style={{ borderColor: isActive ? tool.chip.border : tool.chip.idleBorder, background: isActive ? tool.chip.background : tool.chip.idleBackground, boxShadow: isActive ? `0 0 12px -4px ${tool.chip.border}` : undefined }}>
-                  {tool.label}
-                </button>
-              )
-            })}
-          </div>
-          <input
-            ref={fileInputRef} type="file" multiple className="hidden"
-            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              const files = Array.from(e.target.files ?? [])
-              if (!files.length) return
-              setAttachments((prev) => [...prev, ...files.map((f) => ({ id: crypto.randomUUID(), name: f.name, size: f.size }))])
-              e.target.value = ""
-            }}
-          />
-        </div>
+    <div className="rounded-3xl border border-border/70 bg-white/90 px-4 py-3 shadow-sm">
+      <div className="flex items-start gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Attach file"
+          onClick={() => fileInputRef.current?.click()}
+          className="mt-1 h-8 w-8 shrink-0 rounded-full bg-muted/70 text-muted-foreground hover:bg-muted"
+        >
+          <Paperclip className="h-3.5 w-3.5" />
+        </Button>
+        <Textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value)
+            const el = e.target
+            el.style.height = "auto"
+            el.style.height = `${Math.min(el.scrollHeight, 200)}px`
+          }}
+          placeholder="Lead, listing, or request"
+          className="min-h-[48px] max-h-[200px] flex-1 resize-none border-none bg-transparent px-0 py-2 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0"
+          onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSend() } }}
+          disabled={isSending}
+          rows={1}
+        />
+        <Button
+          onClick={handleSend}
+          size="icon"
+          aria-label="Send"
+          disabled={!canSend}
+          className="mt-1 h-8 w-8 shrink-0 rounded-full border-0 bg-foreground text-background transition-all disabled:opacity-40"
+        >
+          {isSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowUp className="h-3.5 w-3.5" />}
+        </Button>
       </div>
+
+      {attachments.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5 pl-11">
+          {attachments.map((file) => (
+            <div key={file.id} className="flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[11px] text-foreground">
+              <Paperclip className="h-2.5 w-2.5 shrink-0 text-muted-foreground" />
+              <span className="max-w-[120px] truncate">{file.name}</span>
+              <span className="text-muted-foreground/60">{formatFileSize(file.size)}</span>
+              <button
+                type="button"
+                onClick={() => setAttachments((p) => p.filter((f) => f.id !== file.id))}
+                className="ml-0.5 text-muted-foreground hover:text-foreground"
+                aria-label={`Remove ${file.name}`}
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+          const files = Array.from(e.target.files ?? [])
+          if (!files.length) return
+          setAttachments((prev) => [...prev, ...files.map((f) => ({ id: crypto.randomUUID(), name: f.name, size: f.size }))])
+          e.target.value = ""
+        }}
+      />
     </div>
   )
 
   // ── Render ───────────────────────────────────────────────────────
 
   const hasFeed = feed.length > 0
+  const latestWorkEntry = [...feed].reverse().find((entry) => entry.type === "work") ?? null
 
   return (
-    <>
-      <div className="relative">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(120,120,120,0.12),transparent_70%)]" />
-        <div className="rounded-[32px] p-[1px]" style={{ background: `linear-gradient(135deg, ${activeTheme.glow[0]}, ${activeTheme.glow[1]})` }}>
-          <div className="relative rounded-[31px] border border-border/60 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-6 md:p-8">
-            <div className="absolute right-6 top-6 z-10 flex items-center gap-2 rounded-full border border-border/50 bg-muted/30 px-3 py-1 text-[10px] font-medium text-muted-foreground/80">
-              <span className="uppercase tracking-[0.18em]">Activity</span>
-              <span className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70">
-                {healthStatus === "done" ? "Done" : "Unavailable"}
-              </span>
-            </div>
-            {hasFeed ? (
-              <div className="flex min-h-[70vh] flex-col gap-4">
-                {/* Header */}
-                <div className="flex items-center gap-3 border-b border-border/40 pb-4">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full"
-                    style={{ background: `linear-gradient(135deg, ${activeTheme.glow[0]}, ${activeTheme.glow[1]})`, boxShadow: `0 4px 16px -6px ${activeTheme.glow[0]}` }}>
-                    <Sparkles className="h-3.5 w-3.5 text-foreground/80" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground/80">Lelwa</span>
-                </div>
-
-                {/* Feed */}
-                <ScrollArea className="h-[52vh] pr-2">
-                  <div className="space-y-6 pb-2">
-                    {feed.map((entry) => {
-                      if (entry.type === "user") return (
-                        <div key={entry.id} className="flex justify-end">
-                          <div className="flex max-w-[70%] flex-col items-end gap-1">
-                            <div className="rounded-2xl rounded-tr-sm bg-muted/50 px-4 py-2.5 text-sm leading-relaxed text-foreground">
-                              {entry.content}
-                            </div>
-                            {((entry.attachments?.length ?? 0) > 0 || (entry.tools?.length ?? 0) > 0) && (
-                              <div className="flex flex-wrap justify-end gap-1.5">
-                                {entry.tools?.map((t) => (
-                                  <span key={t} className="rounded-full border border-border/40 bg-muted/30 px-2.5 py-0.5 text-[11px] text-muted-foreground">{t}</span>
-                                ))}
-                                {entry.attachments?.map((f) => (
-                                  <span key={f.id} className="flex items-center gap-1 rounded-full border border-border/40 bg-muted/30 px-2.5 py-0.5 text-[11px] text-muted-foreground">
-                                    <Paperclip className="h-2.5 w-2.5" />{f.name}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            <span className="px-1 text-[10px] text-muted-foreground/40">{formatTime(entry.timestamp)}</span>
-                          </div>
-                        </div>
-                      )
-
-                      return (
-                        <div key={entry.id} className="flex gap-3">
-                          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center self-start rounded-full"
-                            style={{ background: `linear-gradient(135deg, ${activeTheme.glow[0]}, ${activeTheme.glow[1]})` }}>
-                            <Sparkles className="h-3.5 w-3.5 text-foreground/80" />
-                          </div>
-                          <div className="flex-1 pt-0.5">
-                            <WorkCard
-                              entry={entry}
-                              onActionClick={handleActionClick}
-                              onConfirmAction={handleConfirmAction}
-                              onConnectRequired={handleConnectRequired}
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
-
-                    {isSending && (
-                      <div className="flex gap-3">
-                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                          style={{ background: `linear-gradient(135deg, ${activeTheme.glow[0]}, ${activeTheme.glow[1]})` }}>
-                          <Sparkles className="h-3.5 w-3.5 text-foreground/80" />
-                        </div>
-                        <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm bg-muted/40 px-4 py-3">
-                          {[0, 160, 320].map((delay) => (
-                            <span key={delay} className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: `${delay}ms` }} />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div ref={feedEndRef} />
-                  </div>
-                </ScrollArea>
-
-                {composer}
-              </div>
-            ) : (
-              <div className="flex min-h-[70vh] flex-col items-center justify-center gap-8 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl"
-                    style={{ background: `linear-gradient(135deg, ${activeTheme.glow[0]}, ${activeTheme.glow[1]})`, boxShadow: `0 8px 32px -8px ${activeTheme.glow[0]}` }}>
-                    <Sparkles className="h-7 w-7 text-foreground/90" />
-                  </div>
-                  <div>
-                    <h1 className="font-display text-3xl text-foreground">Lelwa</h1>
-                    <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                      Submit a lead, property reference, or request.
-                    </p>
-                  </div>
-                  {activeTools.length > 0 && (
-                    <div className="flex flex-wrap items-center justify-center gap-1.5">
-                      {activeTools.map((toolId) => {
-                        const tool = toolOptions.find((t) => t.id === toolId)
-                        if (!tool) return null
-                        return (
-                          <span key={toolId} className="rounded-full border px-3 py-1 text-[11px] font-medium text-foreground"
-                            style={{ borderColor: tool.chip.border, background: tool.chip.background }}>
-                            {tool.label}
-                          </span>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-                {composer}
-              </div>
-            )}
-          </div>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Console</p>
+          <h1 className="mt-2 font-display text-2xl text-foreground">Work feed</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Prepared blocks and actions update here.</p>
         </div>
+        <div className="flex items-center gap-2">
+          {projectName && (
+            <span className="rounded-full border border-border/60 bg-white/80 px-3 py-1 text-xs text-muted-foreground">
+              Project: {projectName}
+            </span>
+          )}
+          <span className="rounded-full border border-border/60 bg-white/80 px-3 py-1 text-xs text-muted-foreground">
+            {healthStatus === "done" ? "Done" : "Unavailable"}
+          </span>
+          <Button
+            variant="outline"
+            className="rounded-full"
+            onClick={() => {
+              const freshId = `lelwa_${crypto.randomUUID()}`
+              window.localStorage.setItem("lelwa_session_id", freshId)
+              setSessionId(freshId)
+              setFeed([])
+            }}
+          >
+            New session
+          </Button>
+        </div>
+      </header>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="flex min-h-[60vh] flex-col rounded-3xl border border-border/70 bg-white/80 p-5 shadow-sm">
+          {hasFeed ? (
+            <ScrollArea className="flex-1 pr-2">
+              <div className="space-y-6 pb-2">
+                {feed.map((entry) => {
+                  if (entry.type === "user") return (
+                    <div key={entry.id} className="flex justify-end">
+                      <div className="flex max-w-[80%] flex-col items-end gap-1">
+                        <div className="rounded-2xl rounded-tr-sm bg-muted/60 px-4 py-2.5 text-sm leading-relaxed text-foreground">
+                          {entry.content}
+                        </div>
+                        {((entry.attachments?.length ?? 0) > 0) && (
+                          <div className="flex flex-wrap justify-end gap-1.5">
+                            {entry.attachments?.map((f) => (
+                              <span key={f.id} className="flex items-center gap-1 rounded-full border border-border/40 bg-muted/30 px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                                <Paperclip className="h-2.5 w-2.5" />{f.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <span className="px-1 text-[10px] text-muted-foreground/60">{formatTime(entry.timestamp)}</span>
+                      </div>
+                    </div>
+                  )
+
+                  return (
+                    <div key={entry.id} className="flex gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/60 bg-white">
+                        <MessageSquare className="h-4 w-4 text-foreground/70" />
+                      </div>
+                      <div className="flex-1 pt-0.5">
+                        <WorkCard
+                          entry={entry}
+                          onActionClick={handleActionClick}
+                          onConfirmAction={handleConfirmAction}
+                          onConnectRequired={handleConnectRequired}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {isSending && (
+                  <div className="flex gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/60 bg-white">
+                      <MessageSquare className="h-4 w-4 text-foreground/70" />
+                    </div>
+                    <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm bg-muted/50 px-4 py-3">
+                      {[0, 160, 320].map((delay) => (
+                        <span key={delay} className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div ref={feedEndRef} />
+              </div>
+            </ScrollArea>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/60 bg-white">
+                <MessageSquare className="h-6 w-6 text-foreground/70" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Start with a lead</h2>
+                <p className="mt-2 text-sm text-muted-foreground">Reply, Call Script, Offer.</p>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4">{composer}</div>
+        </div>
+
+        <PreparedCanvas
+          entry={latestWorkEntry}
+          onActionClick={handleActionClick}
+          onConfirmAction={handleConfirmAction}
+          onConnectRequired={handleConnectRequired}
+        />
       </div>
 
-      {/* JIT Connect Sheet — wired with resume_token */}
       <ConnectSheet
         isOpen={connectSheet.open}
         channel={connectSheet.requirement?.channel ?? ""}
@@ -726,6 +849,6 @@ export default function StudioPage() {
         onClose={() => setConnectSheet({ open: false, entryId: "", action: null, requirement: null })}
         onConnected={handleConnected}
       />
-    </>
+    </div>
   )
 }
