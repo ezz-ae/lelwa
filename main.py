@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 import google.generativeai as genai
+from openai import OpenAI as _OpenAI
 
 from security import SecurityShield, RequestSignature
 from tools import ToolExecutor
@@ -27,9 +28,12 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 genai.configure(api_key=GEMINI_API_KEY)
+ollama_client = _OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
 shield = SecurityShield()
 executor = ToolExecutor(engine)
 MANUAL_TOOL_NAMES = {"send_whatsapp", "call_investor"}
@@ -169,8 +173,17 @@ def _parse_broker_response(raw: str) -> dict:
         except json.JSONDecodeError:
             pass
 
-    # 4. Fallback: wrap as summary block
+    # 4. Regex: pull "reply" value even from malformed / truncated JSON
+    m = re.search(r'"reply"\s*:\s*"((?:[^"\\]|\\.)*)"', text)
+    if m:
+        reply_val = m.group(1).encode().decode("unicode_escape", errors="replace")
+        if reply_val.strip():
+            return {"reply": reply_val.strip(), "prepared_blocks": [], "prepared_actions": []}
+
+    # 5. Last resort: use raw text (truncated) only if it doesn't look like JSON
     short = text[:400] + ("…" if len(text) > 400 else "")
+    if short.strip().startswith("{"):
+        short = "Prepared reply ready."
     return {
         "reply": short,
         "prepared_blocks": [{"type": "summary", "title": "Prepared", "content": text}],
@@ -184,6 +197,29 @@ def _ensure_prepared_contract(structured: dict, message: str) -> dict:
     if not isinstance(reply_text, str):
         reply_text = ""
     reply_text = reply_text.strip()
+
+    # If reply_text looks like JSON (tool-call / format bleed-through from Ollama),
+    # unwrap the inner "reply" value using JSON parse first, then regex fallback.
+    for _ in range(3):
+        if not reply_text.startswith("{"):
+            break
+        extracted = None
+        try:
+            inner = json.loads(reply_text)
+            inner_reply = inner.get("reply", "")
+            if isinstance(inner_reply, str) and inner_reply.strip():
+                extracted = inner_reply.strip()
+                if not structured.get("prepared_blocks") and isinstance(inner.get("prepared_blocks"), list):
+                    structured["prepared_blocks"] = inner["prepared_blocks"]
+        except json.JSONDecodeError:
+            # JSON may be truncated — use regex to pull out "reply": "..." value
+            m = re.search(r'"reply"\s*:\s*"((?:[^"\\]|\\.)*)"', reply_text)
+            if m:
+                extracted = m.group(1).encode().decode("unicode_escape", errors="replace")
+        if extracted and extracted.strip() and not extracted.strip().startswith("{"):
+            reply_text = extracted.strip()
+        else:
+            break
 
     blocks = structured.get("prepared_blocks")
     if not isinstance(blocks, list):
@@ -240,6 +276,69 @@ def _ensure_prepared_contract(structured: dict, message: str) -> dict:
     return structured
 
 
+# ── OLLAMA CHAT ────────────────────────────────────────────────────────────
+
+def _chat_with_ollama(message: str, session_id: str, user_id: str, assessment, model: str | None = None) -> str:
+    """
+    Full tool-call loop against the local Ollama instance.
+    Uses Ollama's OpenAI-compatible API at OLLAMA_BASE_URL.
+    `model` overrides the OLLAMA_MODEL env default for this request.
+    Returns the final raw text response from the model.
+    """
+    ollama_model = model or OLLAMA_MODEL
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": message},
+    ]
+    openai_tools = executor.get_openai_tool_definitions()
+    last_content = ""
+
+    for _ in range(5):
+        response = ollama_client.chat.completions.create(
+            model=ollama_model,
+            messages=messages,
+            tools=openai_tools,
+            tool_choice="auto",
+        )
+        choice = response.choices[0]
+        last_content = choice.message.content or ""
+
+        if not choice.message.tool_calls:
+            break
+
+        # Append assistant turn with tool calls
+        tool_calls_serialized = [
+            {
+                "id": tc.id,
+                "type": "function",
+                "function": {"name": tc.function.name, "arguments": tc.function.arguments},
+            }
+            for tc in choice.message.tool_calls
+        ]
+        messages.append({
+            "role": "assistant",
+            "content": last_content,
+            "tool_calls": tool_calls_serialized,
+        })
+
+        # Execute each tool call and append results
+        for tc in choice.message.tool_calls:
+            args = json.loads(tc.function.arguments or "{}")
+            if tc.function.name in MANUAL_TOOL_NAMES:
+                result = {"status": "manual_action_required"}
+            else:
+                result = executor.execute(tc.function.name, args, session_id, user_id=user_id)
+            if assessment.threat_level != "clear":
+                result = shield.degrade_response(result, assessment)
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": json.dumps(result, default=str),
+            })
+
+    return last_content
+
+
 # ── ENDPOINTS ──────────────────────────────────────────────────────────────
 
 @app.post("/v1/chat")
@@ -265,52 +364,60 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     )
     assessment = shield.evaluate_request(sig)
 
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        system_instruction=SYSTEM_PROMPT,
-        tools=executor.get_tool_definitions(),
-    )
-
-    chat = model.start_chat(history=[])
-    response = chat.send_message(req.message)
-
-    # Tool-call loop (max 5 rounds, data tools only)
-    for _ in range(5):
-        if not response.candidates or not response.candidates[0].content.parts:
-            break
-        has_func = any(
-            hasattr(p, "function_call") and p.function_call.name
-            for p in response.candidates[0].content.parts
+    # Route: anything that's not "gemini" (or empty) goes to local Ollama.
+    # Pass the requested model name through so the canvas can pick llama3.2 vs deepseek-r1.
+    _GEMINI_IDS = {"gemini", "gemini-2.0-flash", None, ""}
+    if req.model not in _GEMINI_IDS:
+        # "ollama" / "local" → env default; named models pass through literally
+        ollama_model_override = req.model if req.model not in ("ollama", "local") else None
+        raw_text = _chat_with_ollama(req.message, req.session_id, req.user_id, assessment, ollama_model_override)
+    else:
+        model = genai.GenerativeModel(
+            model_name="gemini-2.0-flash",
+            system_instruction=SYSTEM_PROMPT,
+            tools=executor.get_tool_definitions(),
         )
-        if not has_func:
-            break
 
-        tool_responses = []
-        for part in response.candidates[0].content.parts:
-            if hasattr(part, "function_call") and part.function_call.name:
-                call = part.function_call
-                if call.name in MANUAL_TOOL_NAMES:
-                    result = {"status": "manual_action_required"}
-                else:
-                    result = executor.execute(
-                        call.name, dict(call.args), req.session_id, user_id=req.user_id
-                    )
-                if assessment.threat_level != "clear":
-                    result = shield.degrade_response(result, assessment)
-                tool_responses.append(
-                    genai.protos.Part(
-                        function_response=genai.protos.FunctionResponse(
-                            name=call.name,
-                            response={"result": json.dumps(result, default=str)},
+        chat = model.start_chat(history=[])
+        response = chat.send_message(req.message)
+
+        # Tool-call loop (max 5 rounds, data tools only)
+        for _ in range(5):
+            if not response.candidates or not response.candidates[0].content.parts:
+                break
+            has_func = any(
+                hasattr(p, "function_call") and p.function_call.name
+                for p in response.candidates[0].content.parts
+            )
+            if not has_func:
+                break
+
+            tool_responses = []
+            for part in response.candidates[0].content.parts:
+                if hasattr(part, "function_call") and part.function_call.name:
+                    call = part.function_call
+                    if call.name in MANUAL_TOOL_NAMES:
+                        result = {"status": "manual_action_required"}
+                    else:
+                        result = executor.execute(
+                            call.name, dict(call.args), req.session_id, user_id=req.user_id
+                        )
+                    if assessment.threat_level != "clear":
+                        result = shield.degrade_response(result, assessment)
+                    tool_responses.append(
+                        genai.protos.Part(
+                            function_response=genai.protos.FunctionResponse(
+                                name=call.name,
+                                response={"result": json.dumps(result, default=str)},
+                            )
                         )
                     )
-                )
 
-        if not tool_responses:
-            break
-        response = chat.send_message(genai.protos.Content(parts=tool_responses))
+            if not tool_responses:
+                break
+            response = chat.send_message(genai.protos.Content(parts=tool_responses))
 
-    raw_text = getattr(response, "text", "") or ""
+        raw_text = getattr(response, "text", "") or ""
     structured = _ensure_prepared_contract(
         _parse_broker_response(raw_text),
         req.message,

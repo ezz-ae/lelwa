@@ -30,6 +30,16 @@ lelwa.com  Full project backend  .yaml
 # Reference design zips
 terra-landing-page.zip
 perplexity-ai-clone-chat-ui-design.zip
+*.zip
+
+# Local data / generated artifacts (do not ship)
+Step-Audio2/
+static/pdfs/
+.claude/
+6159694
+6159698
+=
+Enterprise Decision Infrastructure Finalization (1).yaml
 
 # Channel credential store — legacy (replaced by channels.db)
 channel_store.json

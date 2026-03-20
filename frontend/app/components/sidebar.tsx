@@ -11,16 +11,18 @@ import {
   Folder,
   Plug,
   Plus,
+  Network,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AccountMenu } from "./account-menu"
 
 const navItems = [
-  { id: "home", label: "Home", href: "/?preview=1", match: "/", icon: Home },
-  { id: "studio", label: "Console", href: "/studio", icon: MessageSquare },
-  { id: "sessions", label: "Sessions", href: "/sessions", icon: Clock },
-  { id: "projects", label: "Projects", href: "/projects", icon: Folder },
-  { id: "connect", label: "Connect", href: "/connect", icon: Plug },
+  { id: "home",    label: "Home",     href: "/?preview=1", match: "/", icon: Home         },
+  { id: "studio",  label: "Console",  href: "/studio",                  icon: MessageSquare },
+  { id: "canvas",  label: "Canvas",   href: "/canvas",                  icon: Network       },
+  { id: "sessions",label: "Sessions", href: "/sessions",                icon: Clock         },
+  { id: "projects",label: "Projects", href: "/projects",                icon: Folder        },
+  { id: "connect", label: "Connect",  href: "/connect",                 icon: Plug          },
 ]
 
 export function Sidebar() {

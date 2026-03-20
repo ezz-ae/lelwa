@@ -775,138 +775,160 @@ export default function StudioPage() {
   const latestWorkEntry = [...feed].reverse().find((entry) => entry.type === "work") ?? null
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/20 px-6 py-4">
-        <div className="flex flex-col gap-1">
-          <p className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground">Console</p>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-foreground">
-            <span className="font-semibold">Work feed</span>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-muted-foreground">{projectName ?? activeSessionTitle}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-muted-foreground">
-            {healthStatus === "done" ? "Done" : "Unavailable"}
-          </span>
-          <Button
-            variant="outline"
-            className="rounded-full border-white/10 bg-white/5 text-foreground hover:bg-white/10"
-            onClick={startNewSession}
-          >
-            New session
-          </Button>
-        </div>
-      </header>
-
-      <div className="grid flex-1 grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)_320px]">
-        <aside className="hidden h-full flex-col gap-5 border-r border-white/10 bg-black/20 px-5 py-6 lg:flex">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
-              <span>Imports</span>
-              <span>{importedFiles.length} Files</span>
+    <div className="min-h-screen bg-[radial-gradient(1200px_circle_at_15%_10%,rgba(15,48,79,0.35),transparent_45%),radial-gradient(1000px_circle_at_85%_0%,rgba(20,42,92,0.3),transparent_50%),linear-gradient(180deg,#090d14_0%,#0a0f18_100%)]">
+      <div className="flex min-h-screen flex-col">
+        <header className="border-b border-white/10 bg-black/35 px-4 py-3 backdrop-blur md:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <p className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground">Console</p>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-foreground">
+                <span className="font-semibold">Studio</span>
+                <span className="text-muted-foreground/60">/</span>
+                <span className="text-muted-foreground">{projectName ?? activeSessionTitle}</span>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="mt-3 w-full rounded-xl border border-dashed border-white/15 bg-white/5 px-3 py-3 text-left text-xs text-muted-foreground transition hover:bg-white/10"
-            >
-              Add files
-            </button>
-            {importedFiles.length > 0 && (
-              <div className="mt-3 space-y-2">
-                {importedFiles.map((file) => (
-                  <div key={file.id} className="flex items-center justify-between gap-2 text-xs text-foreground/80">
-                    <span className="truncate">{file.name}</span>
-                    <span className="text-muted-foreground/60">{formatFileSize(file.size)}</span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-muted-foreground">
+                {healthStatus === "done" ? "Live" : "Offline"}
+              </span>
+              <Button
+                variant="outline"
+                className="rounded-full border-white/10 bg-white/5 text-foreground hover:bg-white/10"
+                onClick={startNewSession}
+              >
+                New session
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[280px_minmax(0,1fr)_340px]">
+          <aside className="hidden min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/25 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] lg:flex">
+            <ScrollArea className="h-full">
+              <div className="space-y-4 p-4">
+                <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.24em] text-cyan-100/80">
+                    <span>Canvas + Files</span>
+                    <span>{importedFiles.length}</span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Sessions</p>
-              <button
-                type="button"
-                onClick={() => router.push("/sessions")}
-                className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground/70 hover:text-foreground"
-              >
-                View all
-              </button>
-            </div>
-            {recentSessions.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-muted-foreground">
-                No sessions yet.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {recentSessions.map((session) => {
-                  const isActive = session.id === sessionId
-                  return (
+                  <div className="mt-3 flex gap-2">
                     <button
-                      key={session.id}
                       type="button"
-                      onClick={() => openSession(session.id)}
-                      className={`w-full rounded-2xl border px-3 py-2 text-left text-xs transition ${
-                        isActive
-                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-                          : "border-white/10 bg-white/5 text-foreground/80 hover:bg-white/10"
-                      }`}
+                      onClick={() => router.push("/canvas")}
+                      className="flex-1 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-100 transition hover:bg-cyan-500/20"
                     >
-                      <p className="truncate font-medium">{session.title}</p>
-                      {session.lastMessage && (
-                        <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground/80">{session.lastMessage}</p>
-                      )}
+                      Open Canvas
                     </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Projects</p>
-              <button
-                type="button"
-                onClick={() => router.push("/projects")}
-                className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground/70 hover:text-foreground"
-              >
-                View all
-              </button>
-            </div>
-            {recentProjects.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-muted-foreground">
-                No projects yet.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {recentProjects.map((project) => {
-                  const isActive = project.name === projectName
-                  return (
                     <button
-                      key={project.id}
                       type="button"
-                      onClick={() => openProject(project.id)}
-                      className={`w-full rounded-2xl border px-3 py-2 text-left text-xs transition ${
-                        isActive
-                          ? "border-sky-500/30 bg-sky-500/10 text-sky-100"
-                          : "border-white/10 bg-white/5 text-foreground/80 hover:bg-white/10"
-                      }`}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex-1 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-muted-foreground transition hover:bg-white/10"
                     >
-                      <p className="truncate font-medium">{project.name}</p>
+                      Add files
                     </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </aside>
+                  </div>
+                  {importedFiles.length === 0 ? (
+                    <p className="mt-3 text-xs text-muted-foreground">No files yet. Add notes, contracts, or briefs.</p>
+                  ) : (
+                    <div className="mt-3 space-y-2">
+                      {importedFiles.map((file) => (
+                        <div key={file.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-2.5 py-2 text-xs text-foreground/80">
+                          <span className="truncate">{file.name}</span>
+                          <span className="text-muted-foreground/60">{formatFileSize(file.size)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-        <section className="flex min-h-0 flex-col border-white/10 bg-black/10 lg:border-x">
-          <div className="flex-1 px-6 py-5">
+                <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Sessions</p>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/sessions")}
+                      className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground/70 hover:text-foreground"
+                    >
+                      View all
+                    </button>
+                  </div>
+                  {recentSessions.length === 0 ? (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-muted-foreground">
+                      No sessions yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {recentSessions.map((session) => {
+                        const isActive = session.id === sessionId
+                        return (
+                          <button
+                            key={session.id}
+                            type="button"
+                            onClick={() => openSession(session.id)}
+                            className={`w-full rounded-2xl border px-3 py-2 text-left text-xs transition ${
+                              isActive
+                                ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-100"
+                                : "border-white/10 bg-white/5 text-foreground/80 hover:bg-white/10"
+                            }`}
+                          >
+                            <p className="truncate font-medium">{session.title}</p>
+                            {session.lastMessage && (
+                              <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground/80">{session.lastMessage}</p>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Projects</p>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/projects")}
+                      className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground/70 hover:text-foreground"
+                    >
+                      View all
+                    </button>
+                  </div>
+                  {recentProjects.length === 0 ? (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-muted-foreground">
+                      No projects yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {recentProjects.map((project) => {
+                        const isActive = project.name === projectName
+                        return (
+                          <button
+                            key={project.id}
+                            type="button"
+                            onClick={() => openProject(project.id)}
+                            className={`w-full rounded-2xl border px-3 py-2 text-left text-xs transition ${
+                              isActive
+                                ? "border-sky-500/35 bg-sky-500/10 text-sky-100"
+                                : "border-white/10 bg-white/5 text-foreground/80 hover:bg-white/10"
+                            }`}
+                          >
+                            <p className="truncate font-medium">{project.name}</p>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </ScrollArea>
+          </aside>
+
+          <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/25 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
+              <p className="text-xs font-medium text-foreground/90">Chat</p>
+              <p className="text-[11px] text-muted-foreground">{projectName ?? activeSessionTitle}</p>
+            </div>
+            <div className="flex-1 px-6 py-5">
             {hasFeed ? (
               <ScrollArea className="h-full pr-2">
                 <div className="space-y-5 pb-4">
@@ -976,28 +998,46 @@ export default function StudioPage() {
             )}
           </div>
 
-          <div className="border-t border-white/10 px-6 py-4">
-            {composer}
-          </div>
+            <div className="border-t border-white/10 px-6 py-4">
+              {composer}
+            </div>
 
-          <div className="px-6 pb-6 lg:hidden">
-            <PreparedCanvas
-              entry={latestWorkEntry}
-              onActionClick={handleActionClick}
-              onConfirmAction={handleConfirmAction}
-              onConnectRequired={handleConnectRequired}
-            />
-          </div>
-        </section>
+            <div className="px-6 pb-6 lg:hidden">
+              <PreparedCanvas
+                entry={latestWorkEntry}
+                onActionClick={handleActionClick}
+                onConfirmAction={handleConfirmAction}
+                onConnectRequired={handleConnectRequired}
+              />
+            </div>
+          </section>
 
-        <aside className="hidden h-full flex-col border-l border-white/10 bg-black/20 px-5 py-6 lg:flex">
-          <PreparedCanvas
-            entry={latestWorkEntry}
-            onActionClick={handleActionClick}
-            onConfirmAction={handleConfirmAction}
-            onConnectRequired={handleConnectRequired}
-          />
-        </aside>
+          <aside className="hidden min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/25 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] lg:flex">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div>
+                <p className="text-xs font-medium text-foreground/90">Studio</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Prepared output</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push("/canvas")}
+                className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-cyan-100 transition hover:bg-cyan-500/20"
+              >
+                Canvas
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 p-4">
+              <ScrollArea className="h-full pr-2">
+                <PreparedCanvas
+                  entry={latestWorkEntry}
+                  onActionClick={handleActionClick}
+                  onConfirmAction={handleConfirmAction}
+                  onConnectRequired={handleConnectRequired}
+                />
+              </ScrollArea>
+            </div>
+          </aside>
+        </div>
       </div>
 
       <ConnectSheet

@@ -1,16 +1,11 @@
-import type React from "react"
 import type { Metadata } from "next"
-import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
-const _body = Space_Grotesk({ subsets: ["latin"], variable: "--font-body" })
-const _display = Fraunces({ subsets: ["latin"], variable: "--font-display" })
-const _mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" })
-
 export const metadata: Metadata = {
-  title: "Lelwa | Real Estate Workspace",
-  description: "Real estate workspace for listings, leads, offers, and contracts in Dubai/UAE.",
+  title: "Lelwa | Broker Console",
+  description:
+    "Lelwa prepares replies, call scripts, offers, contracts, and follow-ups for Dubai brokers in one place.",
   icons: {
     icon: [
       {
@@ -30,13 +25,9 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${_body.variable} ${_display.variable} ${_mono.variable}`}>
+    <html lang="en">
       <body className="font-sans antialiased">
         {children}
         <Analytics />

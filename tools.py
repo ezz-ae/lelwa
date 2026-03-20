@@ -80,6 +80,89 @@ class ToolExecutor:
     def get_tool_definitions(self):
         return self.tool_definitions
 
+    def get_openai_tool_definitions(self):
+        """Returns tool definitions in OpenAI function-calling format (used by Ollama)."""
+        spec_path = os.path.join(os.path.dirname(__file__), 'entrestate_codex_spec_v1.json')
+        with open(spec_path, 'r') as f:
+            spec = json.load(f)
+        manual_only = {"send_whatsapp", "call_investor"}
+        tools = []
+        for tool in spec["tools"]["definitions"]:
+            function = tool.get("function", {})
+            if function.get("name") in manual_only:
+                continue
+            tools.append({
+                "type": "function",
+                "function": {
+                    "name": function.get("name"),
+                    "description": function.get("description", ""),
+                    "parameters": function.get("parameters", {}),
+                },
+            })
+        # Append the browser tool (defined inline, not in the JSON spec)
+        tools.append({
+            "type": "function",
+            "function": {
+                "name": "browse_web",
+                "description": (
+                    "Use a real web browser to research a topic, find current news, "
+                    "check live prices, or gather information not in the local database. "
+                    "Use this when the answer requires up-to-date or external web data."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": {
+                            "type": "string",
+                            "description": "Natural language task describing what to search or browse for.",
+                        }
+                    },
+                    "required": ["task"],
+                },
+            },
+        })
+        return tools
+
+    def tool_browse_web(self, args: dict, session_id: str = None, user_id: str = "default") -> dict:
+        """
+        Uses browser-use + a local Ollama LLM to browse the web and return results.
+        Args:
+            task (str): Natural-language task, e.g. "Find current Dubai off-plan project launches in 2026"
+        """
+        task = args.get("task", "").strip()
+        if not task:
+            return {"error": "Provide a 'task' describing what to browse for."}
+
+        ollama_base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+        ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2")
+
+        try:
+            import asyncio
+            from browser_use import Agent
+            from langchain_openai import ChatOpenAI
+
+            llm = ChatOpenAI(
+                model=ollama_model,
+                base_url=ollama_base,
+                api_key="ollama",
+            )
+
+            async def _run():
+                agent = Agent(task=task, llm=llm)
+                result = await agent.run()
+                return result
+
+            result = asyncio.run(_run())
+            return {"task": task, "result": str(result)}
+
+        except ImportError:
+            return {
+                "error": "browser-use not installed. Run: pip install browser-use langchain-openai && playwright install chromium",
+                "task": task,
+            }
+        except Exception as e:
+            return {"error": str(e), "task": task}
+
     def _get_property_snapshot(self, name: str) -> Optional[Dict[str, Any]]:
         if not name:
             return None
