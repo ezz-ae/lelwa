@@ -31,7 +31,7 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="flex h-screen w-[72px] shrink-0 flex-col items-center justify-between border-r border-white/10 bg-[hsl(var(--sidebar-background))] py-4 text-[hsl(var(--sidebar-foreground))]">
+      <aside className="flex h-screen w-[72px] shrink-0 flex-col items-center justify-between border-r border-sidebar-border bg-sidebar py-4 text-sidebar-foreground">
         <div className="flex flex-col items-center gap-4">
           <Link
             href="/?preview=1"
