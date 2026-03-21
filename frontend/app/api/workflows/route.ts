@@ -7,6 +7,7 @@ const WORKFLOW_API_BASE = (
   "http://localhost:8000"
 ).replace(/\/$/, "")
 const DEFAULT_USER_ID = "default"
+const ALLOW_LOCAL_FALLBACK = process.env.NODE_ENV !== "production"
 
 type WorkflowResponseShape = {
   id?: string
@@ -66,8 +67,14 @@ export async function GET() {
         : []
       return NextResponse.json({ workflows })
     }
+    if (!ALLOW_LOCAL_FALLBACK) {
+      return NextResponse.json({ error: "Workflow backend unavailable" }, { status: response.status || 502 })
+    }
   } catch (error) {
     console.warn("Workflow GET backend unavailable, falling back to local store", error)
+    if (!ALLOW_LOCAL_FALLBACK) {
+      return NextResponse.json({ error: "Workflow backend unavailable" }, { status: 502 })
+    }
   }
 
   return NextResponse.json({ workflows: listWorkflows().map((workflow) => normalizeWorkflow(workflow)) })
@@ -91,8 +98,14 @@ export async function POST(request: Request) {
         const result = await response.json()
         return NextResponse.json({ workflow: normalizeWorkflow(result.workflow ?? {}) })
       }
+      if (!ALLOW_LOCAL_FALLBACK) {
+        return NextResponse.json({ error: "Workflow backend unavailable" }, { status: response.status || 502 })
+      }
     } catch (error) {
       console.warn("Workflow POST backend unavailable, falling back to local store", error)
+      if (!ALLOW_LOCAL_FALLBACK) {
+        return NextResponse.json({ error: "Workflow backend unavailable" }, { status: 502 })
+      }
     }
 
     const workflow = saveWorkflow({

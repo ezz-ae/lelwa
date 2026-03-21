@@ -7,6 +7,7 @@ const WORKFLOW_API_BASE = (
   "http://localhost:8000"
 ).replace(/\/$/, "")
 const DEFAULT_USER_ID = "default"
+const ALLOW_LOCAL_FALLBACK = process.env.NODE_ENV !== "production"
 
 type RunStatus = "pending" | "running" | "completed" | "failed"
 const RUN_STATUSES: RunStatus[] = ["pending", "running", "completed", "failed"]
@@ -29,8 +30,14 @@ export async function GET(
       const data = await response.json()
       return NextResponse.json({ history: Array.isArray(data?.history) ? data.history : [] })
     }
+    if (!ALLOW_LOCAL_FALLBACK) {
+      return NextResponse.json({ error: "Workflow backend unavailable" }, { status: response.status || 502 })
+    }
   } catch (error) {
     console.warn("Workflow history GET backend unavailable, falling back to local store", error)
+    if (!ALLOW_LOCAL_FALLBACK) {
+      return NextResponse.json({ error: "Workflow backend unavailable" }, { status: 502 })
+    }
   }
 
   return NextResponse.json({ history: getRunHistory(id) })
@@ -72,8 +79,14 @@ export async function POST(
         const data = await response.json()
         return NextResponse.json(data)
       }
+      if (!ALLOW_LOCAL_FALLBACK) {
+        return NextResponse.json({ error: "Workflow backend unavailable" }, { status: response.status || 502 })
+      }
     } catch (error) {
       console.warn("Workflow history POST backend unavailable, falling back to local store", error)
+      if (!ALLOW_LOCAL_FALLBACK) {
+        return NextResponse.json({ error: "Workflow backend unavailable" }, { status: 502 })
+      }
     }
 
     const run = logWorkflowExecution(id, {

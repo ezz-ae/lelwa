@@ -8,6 +8,7 @@ const WORKFLOW_API_BASE = (
   "http://localhost:8000"
 ).replace(/\/$/, "")
 const DEFAULT_USER_ID = "default"
+const ALLOW_LOCAL_FALLBACK = process.env.NODE_ENV !== "production"
 
 async function persistRunHistory(
   workflowId: string,
@@ -32,8 +33,14 @@ async function persistRunHistory(
     if (response.ok) {
       return
     }
+    if (!ALLOW_LOCAL_FALLBACK) {
+      return
+    }
   } catch (error) {
     console.warn("Workflow history persistence via backend failed, falling back to local store", error)
+    if (!ALLOW_LOCAL_FALLBACK) {
+      return
+    }
   }
 
   logWorkflowExecution(workflowId, {

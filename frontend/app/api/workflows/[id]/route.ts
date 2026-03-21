@@ -7,6 +7,7 @@ const WORKFLOW_API_BASE = (
   "http://localhost:8000"
 ).replace(/\/$/, "")
 const DEFAULT_USER_ID = "default"
+const ALLOW_LOCAL_FALLBACK = process.env.NODE_ENV !== "production"
 
 type WorkflowResponseShape = {
   id?: string
@@ -68,8 +69,14 @@ export async function GET(
       const result = await response.json()
       return NextResponse.json({ workflow: normalizeWorkflow(result.workflow ?? {}) })
     }
+    if (!ALLOW_LOCAL_FALLBACK) {
+      return NextResponse.json({ error: "Workflow backend unavailable" }, { status: response.status || 502 })
+    }
   } catch (error) {
     console.warn("Workflow GET by id backend unavailable, falling back to local store", error)
+    if (!ALLOW_LOCAL_FALLBACK) {
+      return NextResponse.json({ error: "Workflow backend unavailable" }, { status: 502 })
+    }
   }
 
   const workflow = getWorkflow(id)
@@ -99,8 +106,14 @@ export async function PUT(
         const result = await response.json()
         return NextResponse.json({ workflow: normalizeWorkflow(result.workflow ?? {}) })
       }
+      if (!ALLOW_LOCAL_FALLBACK) {
+        return NextResponse.json({ error: "Workflow backend unavailable" }, { status: response.status || 502 })
+      }
     } catch (error) {
       console.warn("Workflow PUT backend unavailable, falling back to local store", error)
+      if (!ALLOW_LOCAL_FALLBACK) {
+        return NextResponse.json({ error: "Workflow backend unavailable" }, { status: 502 })
+      }
     }
 
     const workflow = saveWorkflow({
@@ -131,8 +144,14 @@ export async function DELETE(
       { method: "DELETE" },
     )
     deletedRemote = response.ok
+    if (!deletedRemote && !ALLOW_LOCAL_FALLBACK) {
+      return NextResponse.json({ error: "Workflow backend unavailable" }, { status: response.status || 502 })
+    }
   } catch (error) {
     console.warn("Workflow DELETE backend unavailable, falling back to local store", error)
+    if (!ALLOW_LOCAL_FALLBACK) {
+      return NextResponse.json({ error: "Workflow backend unavailable" }, { status: 502 })
+    }
   }
 
   const local = getWorkflow(id)
