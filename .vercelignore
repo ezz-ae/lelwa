@@ -1,0 +1,13 @@
+venv
+__pycache__
+*.pyc
+*.pyo
+
+# backend-only python runtime files should not be deployed in the frontend Vercel app
+main.py
+tools.py
+channels.py
+security.py
+requirements.txt
+schema.sql
+entrestore_codex_spec_v1.json
