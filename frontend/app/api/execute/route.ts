@@ -2,6 +2,9 @@ import { NextResponse } from "next/server"
 import { logWorkflowExecution } from "@/lib/workflow-store"
 import type { WorkflowNode } from "@/lib/workflow-types"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const WORKFLOW_API_BASE = (
   process.env.LELWA_API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_BASE_URL ??

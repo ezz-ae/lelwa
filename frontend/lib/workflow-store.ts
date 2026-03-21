@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto"
 import type { Edge } from "@xyflow/react"
 import type { WorkflowNode } from "./workflow-types"
 
@@ -34,10 +33,17 @@ export interface RunHistoryItem {
 const workflows = new Map<string, WorkflowRecord>()
 const workflowHistory = new Map<string, RunHistoryItem[]>()
 
+function createId() {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 function buildBaseRecord(payload: WorkflowPayload, existing?: WorkflowRecord) {
   const now = new Date().toISOString()
   return {
-    id: payload.id ?? existing?.id ?? randomUUID(),
+    id: payload.id ?? existing?.id ?? createId(),
     name: payload.name,
     description: payload.description ?? existing?.description,
     templateId: payload.templateId ?? existing?.templateId ?? null,
@@ -74,7 +80,7 @@ export function logWorkflowExecution(
 ) {
   const list = workflowHistory.get(workflowId) ?? []
   const run: RunHistoryItem = {
-    id: randomUUID(),
+    id: createId(),
     workflow_id: workflowId,
     status: entry.status,
     final_output: entry.final_output,

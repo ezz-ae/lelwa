@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import { deleteWorkflow, getWorkflow, saveWorkflow } from "@/lib/workflow-store"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const WORKFLOW_API_BASE = (
   process.env.LELWA_API_BASE_URL ??
   process.env.NEXT_PUBLIC_API_BASE_URL ??
