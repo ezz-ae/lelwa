@@ -2,6 +2,7 @@ import json
 import re
 import hashlib
 import uuid
+import tempfile
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -32,14 +33,39 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
-genai.configure(api_key=GEMINI_API_KEY)
+
+def _init_engine():
+    if not DATABASE_URL:
+        return None
+    try:
+        return create_engine(DATABASE_URL, pool_pre_ping=True)
+    except Exception:
+        return None
+
+
+def _resolve_static_dir() -> str:
+    configured = os.getenv("STATIC_DIR")
+    if configured:
+        return configured
+    if os.getenv("VERCEL") == "1":
+        return os.path.join(tempfile.gettempdir(), "lelwa-static")
+    return os.path.join(os.path.dirname(__file__), "static")
+
+
+engine = _init_engine()
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 ollama_client = _OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
 shield = SecurityShield()
 executor = ToolExecutor(engine)
 MANUAL_TOOL_NAMES = {"send_whatsapp", "call_investor"}
 
-os.makedirs("static", exist_ok=True)
+STATIC_DIR = _resolve_static_dir()
+try:
+    os.makedirs(STATIC_DIR, exist_ok=True)
+except Exception:
+    STATIC_DIR = os.path.join(tempfile.gettempdir(), "lelwa-static")
+    os.makedirs(STATIC_DIR, exist_ok=True)
 
 app = FastAPI(title="Lelwa API", version="4.0.0")
 
@@ -51,7 +77,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+try:
+    app.mount("/static", StaticFiles(directory=STATIC_DIR, check_dir=False), name="static")
+except Exception:
+    pass
 
 
 def init_workflow_tables() -> None:
@@ -59,6 +88,8 @@ def init_workflow_tables() -> None:
     Creates workflow tables if missing.
     Fail-open so API can still boot even if DB migrations are unavailable.
     """
+    if engine is None:
+        return
     try:
         with engine.begin() as conn:
             conn.execute(text("""
