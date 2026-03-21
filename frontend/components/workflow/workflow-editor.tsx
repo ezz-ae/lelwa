@@ -18,7 +18,6 @@ import { WorkflowToolbar } from "./workflow-toolbar";
 import { OutputPanel } from "./output-panel";
 import { LoadWorkflowDialog } from "./load-workflow-dialog";
 import { NodeEditPanel } from "./node-edit-panel";
-import { TemplatesDialog } from "./templates-dialog"; // Import TemplatesDialog
 import { RunHistoryDialog } from "./run-history-dialog";
 import { WORKFLOW_TEMPLATES, type WorkflowTemplate } from "@/lib/workflow-templates";
 
@@ -44,6 +43,7 @@ function WorkflowEditorInner({ initialTemplate }: WorkflowEditorInnerProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(cloneNodes(template.nodes));
   const [edges, setEdges, onEdgesChange] = useEdgesState(cloneEdges(template.edges));
   const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [templateId, setTemplateId] = useState<string | null>(template.id ?? null);
   const [workflowName, setWorkflowName] = useState(template.name);
   const [hasChanges, setHasChanges] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -53,7 +53,6 @@ function WorkflowEditorInner({ initialTemplate }: WorkflowEditorInnerProps) {
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [selectedNode, setSelectedNode] = useState<WorkflowNode | null>(null);
-  const [showTemplatesDialog, setShowTemplatesDialog] = useState(false); // Declare showTemplatesDialog
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -239,6 +238,7 @@ function WorkflowEditorInner({ initialTemplate }: WorkflowEditorInnerProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: workflowName,
+          template_id: templateId,
           nodes,
           edges,
         }),
@@ -247,9 +247,10 @@ function WorkflowEditorInner({ initialTemplate }: WorkflowEditorInnerProps) {
       const result = await response.json();
 
       if (response.ok) {
-        if (!workflowId) {
+        if (result.workflow?.id) {
           setWorkflowId(result.workflow.id);
         }
+        setTemplateId(result.workflow?.template_id ?? result.workflow?.templateId ?? templateId ?? null);
         setHasChanges(false);
       }
     } catch (error) {
@@ -266,9 +267,10 @@ function WorkflowEditorInner({ initialTemplate }: WorkflowEditorInnerProps) {
 
       if (response.ok && result.workflow) {
         setWorkflowId(result.workflow.id);
+        setTemplateId(result.workflow.template_id ?? result.workflow.templateId ?? null);
         setWorkflowName(result.workflow.name);
-        setNodes(result.workflow.nodes || []);
-        setEdges(result.workflow.edges || []);
+        setNodes(cloneNodes(result.workflow.nodes || []));
+        setEdges(cloneEdges(result.workflow.edges || []));
         setHasChanges(false);
         setShowLoadDialog(false);
       }
@@ -279,6 +281,7 @@ function WorkflowEditorInner({ initialTemplate }: WorkflowEditorInnerProps) {
 
   const handleNew = () => {
     setWorkflowId(null);
+    setTemplateId(null);
     setWorkflowName("Untitled Workflow");
     setNodes([]);
     setEdges([]);
@@ -294,8 +297,14 @@ function WorkflowEditorInner({ initialTemplate }: WorkflowEditorInnerProps) {
     setSelectedNode(null);
   };
 
-  const handleSelectTemplate = (templateNodes: WorkflowNode[], templateEdges: Edge[], name: string) => {
+  const handleSelectTemplate = (
+    selectedTemplateId: string,
+    templateNodes: WorkflowNode[],
+    templateEdges: Edge[],
+    name: string
+  ) => {
     setWorkflowId(null);
+    setTemplateId(selectedTemplateId);
     setWorkflowName(name);
     setNodes(cloneNodes(templateNodes));
     setEdges(cloneEdges(templateEdges));

@@ -249,4 +249,32 @@
   .text-workflow-text-subtle {
     color: hsl(var(--workflow-text-subtle));
   }
+  .react-flow__controls {
+    background-color: hsl(var(--workflow-surface));
+    border: 1px solid hsl(var(--workflow-border));
+    border-radius: 0.5rem;
+    box-shadow: none;
+  }
+  .react-flow__controls-button {
+    background-color: transparent;
+    border-bottom: 1px solid hsl(var(--workflow-border));
+    color: hsl(var(--workflow-text-muted));
+  }
+  .react-flow__controls-button:hover {
+    background-color: hsl(var(--workflow-surface-hover));
+    color: hsl(var(--workflow-text));
+  }
+  .react-flow__controls-button:last-child {
+    border-bottom: none;
+  }
+  .react-flow__minimap {
+    background-color: hsl(var(--workflow-surface));
+    border: 1px solid hsl(var(--workflow-border));
+    border-radius: 0.75rem;
+  }
+  .react-flow__attribution {
+    background-color: hsl(var(--workflow-surface));
+    border: 1px solid hsl(var(--workflow-border));
+    color: hsl(var(--workflow-text-subtle));
+  }
 }

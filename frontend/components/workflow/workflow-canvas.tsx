@@ -207,8 +207,9 @@ export function WorkflowCanvas({
           size={1}
           color={isDark ? "#27272a" : "#d4d4d8"}
         />
-        <Controls showInteractive={false} />
+        <Controls showInteractive={false} className="!bg-workflow-surface !border !border-workflow-border !rounded-lg !shadow-none" />
         <MiniMap
+          className="!bg-workflow-surface !border !border-workflow-border !rounded-xl"
           nodeColor={isDark ? "#3f3f46" : "#a1a1aa"}
           maskColor={isDark ? "rgba(0, 0, 0, 0.7)" : "rgba(255, 255, 255, 0.7)"}
         />

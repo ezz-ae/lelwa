@@ -1,6 +1,7 @@
 import json
 import re
 import hashlib
+import uuid
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -10,7 +11,7 @@ import os
 from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 import google.generativeai as genai
 from openai import OpenAI as _OpenAI
@@ -53,6 +54,54 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+def init_workflow_tables() -> None:
+    """
+    Creates workflow tables if missing.
+    Fail-open so API can still boot even if DB migrations are unavailable.
+    """
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS workflow_definitions (
+                    id          TEXT PRIMARY KEY,
+                    user_id     TEXT NOT NULL DEFAULT 'default',
+                    name        TEXT NOT NULL,
+                    description TEXT,
+                    template_id TEXT,
+                    nodes_json  JSONB NOT NULL,
+                    edges_json  JSONB NOT NULL,
+                    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+            """))
+            conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_definitions_user_updated
+                ON workflow_definitions (user_id, updated_at DESC)
+            """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS workflow_runs (
+                    id           TEXT PRIMARY KEY,
+                    workflow_id  TEXT NOT NULL,
+                    user_id      TEXT NOT NULL DEFAULT 'default',
+                    status       TEXT NOT NULL,
+                    final_output TEXT,
+                    started_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    completed_at TIMESTAMPTZ,
+                    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+            """))
+            conn.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_workflow_runs_workflow_started
+                ON workflow_runs (workflow_id, started_at DESC)
+            """))
+    except Exception:
+        # Do not block API startup if DB setup is unavailable.
+        pass
+
+
+init_workflow_tables()
+
+
 # ── MODELS ─────────────────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
@@ -78,6 +127,24 @@ class ChannelConfigRequest(BaseModel):
 
 class ResumeRequest(BaseModel):
     resume_token: str
+
+
+class WorkflowSaveRequest(BaseModel):
+    id: Optional[str] = None
+    user_id: str = "default"
+    name: str
+    description: Optional[str] = None
+    template_id: Optional[str] = None
+    nodes: list = Field(default_factory=list)
+    edges: list = Field(default_factory=list)
+
+
+class WorkflowRunLogRequest(BaseModel):
+    user_id: str = "default"
+    status: str
+    final_output: Optional[str] = None
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
 
 
 # ── SYSTEM PROMPT ──────────────────────────────────────────────────────────
@@ -523,6 +590,185 @@ async def resume_action(req: ResumeRequest):
         "tool_name": pending["tool_name"],
         "result": result,
     }
+
+
+def _json_value(value, default):
+    if value is None:
+        return default
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except Exception:
+            return default
+    return value
+
+
+def _workflow_row_to_dict(row: dict) -> dict:
+    return {
+        "id": row.get("id"),
+        "user_id": row.get("user_id"),
+        "name": row.get("name"),
+        "description": row.get("description"),
+        "template_id": row.get("template_id"),
+        "nodes": _json_value(row.get("nodes_json"), []),
+        "edges": _json_value(row.get("edges_json"), []),
+        "created_at": row.get("created_at").isoformat() if row.get("created_at") else None,
+        "updated_at": row.get("updated_at").isoformat() if row.get("updated_at") else None,
+    }
+
+
+@app.get("/v1/workflows")
+async def list_workflows(user_id: str = "default"):
+    try:
+        with engine.connect() as conn:
+            rows = conn.execute(
+                text("""
+                    SELECT id, user_id, name, description, template_id, nodes_json, edges_json, created_at, updated_at
+                    FROM workflow_definitions
+                    WHERE user_id = :user_id
+                    ORDER BY updated_at DESC
+                """),
+                {"user_id": user_id},
+            ).fetchall()
+            return {"workflows": [_workflow_row_to_dict(dict(r._mapping)) for r in rows]}
+    except Exception:
+        return {"workflows": []}
+
+
+@app.post("/v1/workflows")
+async def create_workflow(req: WorkflowSaveRequest):
+    workflow_id = req.id or str(uuid.uuid4())
+    try:
+        with engine.begin() as conn:
+            row = conn.execute(
+                text("""
+                    INSERT INTO workflow_definitions
+                        (id, user_id, name, description, template_id, nodes_json, edges_json, created_at, updated_at)
+                    VALUES
+                        (:id, :user_id, :name, :description, :template_id, CAST(:nodes_json AS JSONB), CAST(:edges_json AS JSONB), NOW(), NOW())
+                    ON CONFLICT (id) DO UPDATE SET
+                        user_id = EXCLUDED.user_id,
+                        name = EXCLUDED.name,
+                        description = EXCLUDED.description,
+                        template_id = EXCLUDED.template_id,
+                        nodes_json = EXCLUDED.nodes_json,
+                        edges_json = EXCLUDED.edges_json,
+                        updated_at = NOW()
+                    RETURNING id, user_id, name, description, template_id, nodes_json, edges_json, created_at, updated_at
+                """),
+                {
+                    "id": workflow_id,
+                    "user_id": req.user_id,
+                    "name": req.name,
+                    "description": req.description,
+                    "template_id": req.template_id,
+                    "nodes_json": json.dumps(req.nodes or []),
+                    "edges_json": json.dumps(req.edges or []),
+                },
+            ).fetchone()
+            if not row:
+                raise HTTPException(status_code=500, detail="workflow not saved")
+            return {"workflow": _workflow_row_to_dict(dict(row._mapping))}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/v1/workflows/{workflow_id}")
+async def get_workflow(workflow_id: str, user_id: str = "default"):
+    with engine.connect() as conn:
+        row = conn.execute(
+            text("""
+                SELECT id, user_id, name, description, template_id, nodes_json, edges_json, created_at, updated_at
+                FROM workflow_definitions
+                WHERE id = :id AND user_id = :user_id
+            """),
+            {"id": workflow_id, "user_id": user_id},
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        return {"workflow": _workflow_row_to_dict(dict(row._mapping))}
+
+
+@app.put("/v1/workflows/{workflow_id}")
+async def update_workflow(workflow_id: str, req: WorkflowSaveRequest):
+    payload = req.model_copy(update={"id": workflow_id})
+    return await create_workflow(payload)
+
+
+@app.delete("/v1/workflows/{workflow_id}")
+async def delete_workflow(workflow_id: str, user_id: str = "default"):
+    with engine.begin() as conn:
+        conn.execute(
+            text("DELETE FROM workflow_runs WHERE workflow_id = :id AND user_id = :user_id"),
+            {"id": workflow_id, "user_id": user_id},
+        )
+        result = conn.execute(
+            text("DELETE FROM workflow_definitions WHERE id = :id AND user_id = :user_id"),
+            {"id": workflow_id, "user_id": user_id},
+        )
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+    return {"success": True}
+
+
+@app.get("/v1/workflows/{workflow_id}/history")
+async def get_workflow_history(workflow_id: str, user_id: str = "default"):
+    try:
+        with engine.connect() as conn:
+            rows = conn.execute(
+                text("""
+                    SELECT id, workflow_id, status, final_output, started_at, completed_at
+                    FROM workflow_runs
+                    WHERE workflow_id = :workflow_id AND user_id = :user_id
+                    ORDER BY started_at DESC
+                    LIMIT 50
+                """),
+                {"workflow_id": workflow_id, "user_id": user_id},
+            ).fetchall()
+            history = [
+                {
+                    "id": r.id,
+                    "workflow_id": r.workflow_id,
+                    "status": r.status,
+                    "final_output": r.final_output,
+                    "started_at": r.started_at.isoformat() if r.started_at else None,
+                    "completed_at": r.completed_at.isoformat() if r.completed_at else None,
+                }
+                for r in rows
+            ]
+            return {"history": history}
+    except Exception:
+        return {"history": []}
+
+
+@app.post("/v1/workflows/{workflow_id}/history")
+async def log_workflow_history(workflow_id: str, req: WorkflowRunLogRequest):
+    run_id = str(uuid.uuid4())
+    started_at = req.started_at or datetime.now().isoformat()
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text("""
+                    INSERT INTO workflow_runs
+                        (id, workflow_id, user_id, status, final_output, started_at, completed_at, created_at)
+                    VALUES
+                        (:id, :workflow_id, :user_id, :status, :final_output, CAST(:started_at AS TIMESTAMPTZ), CAST(:completed_at AS TIMESTAMPTZ), NOW())
+                """),
+                {
+                    "id": run_id,
+                    "workflow_id": workflow_id,
+                    "user_id": req.user_id,
+                    "status": req.status,
+                    "final_output": req.final_output,
+                    "started_at": started_at,
+                    "completed_at": req.completed_at,
+                },
+            )
+            return {"success": True, "id": run_id}
+    except Exception:
+        return {"success": False}
 
 
 # ── SUPPORTING ENDPOINTS ───────────────────────────────────────────────────

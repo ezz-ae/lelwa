@@ -2,16 +2,21 @@
 
 import React from "react"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { X, Loader2, Trash2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { WORKFLOW_TEMPLATES } from "@/lib/workflow-templates";
 
 interface SavedWorkflow {
   id: string;
   name: string;
   description?: string;
-  created_at: string;
-  updated_at: string;
+  template_id?: string | null;
+  templateId?: string | null;
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
 }
 
 interface LoadWorkflowDialogProps {
@@ -24,6 +29,10 @@ export function LoadWorkflowDialog({ isOpen, onClose, onLoad }: LoadWorkflowDial
   const [workflows, setWorkflows] = useState<SavedWorkflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const templateNameById = useMemo(
+    () => new Map(WORKFLOW_TEMPLATES.map((template) => [template.id, template.name])),
+    []
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -49,12 +58,24 @@ export function LoadWorkflowDialog({ isOpen, onClose, onLoad }: LoadWorkflowDial
     setDeleting(id);
     try {
       await fetch(`/api/workflows/${id}`, { method: "DELETE" });
-      setWorkflows(workflows.filter((w) => w.id !== id));
+      setWorkflows((previous) => previous.filter((workflow) => workflow.id !== id));
     } catch (error) {
       console.error("Failed to delete workflow:", error);
     } finally {
       setDeleting(null);
     }
+  };
+
+  const getUpdatedAtLabel = (workflow: SavedWorkflow) => {
+    const value = workflow.updated_at ?? workflow.updatedAt ?? workflow.created_at ?? workflow.createdAt;
+    if (!value) {
+      return "Unknown date";
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return "Unknown date";
+    }
+    return date.toLocaleDateString();
   };
 
   if (!isOpen) return null;
@@ -106,9 +127,17 @@ export function LoadWorkflowDialog({ isOpen, onClose, onLoad }: LoadWorkflowDial
                           {workflow.description}
                         </p>
                       )}
+                      {(workflow.template_id ?? workflow.templateId) && (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center rounded-md border border-workflow-border/80 bg-workflow-surface px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-workflow-text-muted">
+                            {templateNameById.get((workflow.template_id ?? workflow.templateId) as string) ??
+                              (workflow.template_id ?? workflow.templateId)}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-1 mt-2 text-xs text-workflow-text-subtle">
                         <Clock className="w-3 h-3" />
-                        {new Date(workflow.updated_at).toLocaleDateString()}
+                        {getUpdatedAtLabel(workflow)}
                       </div>
                     </button>
                     <button

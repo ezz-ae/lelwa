@@ -8,8 +8,7 @@ import { WORKFLOW_TEMPLATES } from "@/lib/workflow-templates"
 interface TemplatesDialogProps {
   isOpen: boolean
   onClose: () => void
-  onSelectTemplate: (nodes: WorkflowNode[], edges: Edge[], name: string) => void
-  anchorRef?: React.RefObject<HTMLElement>
+  onSelectTemplate: (templateId: string, nodes: WorkflowNode[], edges: Edge[], name: string) => void
 }
 
 export function TemplatesDialog({ isOpen, onClose, onSelectTemplate }: TemplatesDialogProps) {
@@ -49,7 +48,7 @@ export function TemplatesDialog({ isOpen, onClose, onSelectTemplate }: Templates
               key={template.id}
               type="button"
               onClick={() => {
-                onSelectTemplate(template.nodes, template.edges, template.name)
+                onSelectTemplate(template.id, template.nodes, template.edges, template.name)
                 onClose()
               }}
               className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-workflow-surface-hover transition-colors duration-200 text-left"

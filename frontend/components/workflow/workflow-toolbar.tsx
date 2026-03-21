@@ -19,6 +19,7 @@ import {
   FolderOpen,
   Monitor,
   Plus,
+  FilePlus2,
 } from "lucide-react";
 import { TemplatesDialog } from "./templates-dialog";
 import { AddNodeDialog } from "./add-node-dialog";
@@ -35,7 +36,7 @@ interface WorkflowToolbarProps {
   onClear: () => void;
   onOpenHistory: () => void;
   onToggleOutput: () => void;
-  onSelectTemplate: (nodes: WorkflowNode[], edges: Edge[], name: string) => void;
+  onSelectTemplate: (templateId: string, nodes: WorkflowNode[], edges: Edge[], name: string) => void;
   onAddNode: (nodeType: WorkflowNodeType) => void;
   isExecuting: boolean;
   isSaving: boolean;
@@ -91,6 +92,7 @@ export function WorkflowToolbar({
   onExecute,
   onSave,
   onLoad,
+  onNew,
   onClear,
   onOpenHistory,
   onToggleOutput,
@@ -110,8 +112,6 @@ export function WorkflowToolbar({
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const onOpenTemplates = () => setShowTemplates(true);
 
   return (
     <div className="h-14 bg-workflow-bg border-b border-workflow-border flex items-center justify-between px-4 transition-colors duration-200">
@@ -188,8 +188,8 @@ export function WorkflowToolbar({
           <TemplatesDialog
             isOpen={showTemplates}
             onClose={() => setShowTemplates(false)}
-            onSelectTemplate={(nodes, edges, name) => {
-              onSelectTemplate(nodes, edges, name);
+            onSelectTemplate={(templateId, nodes, edges, name) => {
+              onSelectTemplate(templateId, nodes, edges, name);
               setShowTemplates(false);
             }}
           />
@@ -197,6 +197,11 @@ export function WorkflowToolbar({
 
         {/* Save & Load */}
         <ButtonGroup>
+          <IconButton
+            icon={<FilePlus2 className="w-4 h-4" />}
+            onClick={onNew}
+            title="New workflow"
+          />
           <IconButton
             icon={isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             onClick={onSave}

@@ -6,6 +6,7 @@ interface WorkflowPayload {
   id?: string
   name: string
   description?: string
+  templateId?: string | null
   nodes?: WorkflowNode[]
   edges?: Edge[]
 }
@@ -14,6 +15,7 @@ interface WorkflowRecord {
   id: string
   name: string
   description?: string
+  templateId?: string | null
   nodes: WorkflowNode[]
   edges: Edge[]
   createdAt: string
@@ -38,6 +40,7 @@ function buildBaseRecord(payload: WorkflowPayload, existing?: WorkflowRecord) {
     id: payload.id ?? existing?.id ?? randomUUID(),
     name: payload.name,
     description: payload.description ?? existing?.description,
+    templateId: payload.templateId ?? existing?.templateId ?? null,
     nodes: payload.nodes ?? existing?.nodes ?? [],
     edges: payload.edges ?? existing?.edges ?? [],
     createdAt: existing?.createdAt ?? now,
