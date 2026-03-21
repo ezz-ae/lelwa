@@ -8,18 +8,53 @@ Rules enforced here:
 """
 
 import json
+import os
 import sqlite3
+import tempfile
 import uuid
 from datetime import datetime
 from typing import Optional
 
-CHANNEL_DB = "channels.db"
+
+def _resolve_channel_db_path() -> str:
+    env_path = os.getenv("CHANNEL_DB_PATH") or os.getenv("CHANNEL_DB")
+    if env_path:
+        return env_path
+
+    # Serverless file systems are read-only except /tmp.
+    if os.getenv("VERCEL") == "1":
+        return os.path.join(tempfile.gettempdir(), "channels.db")
+
+    return os.path.join(os.path.dirname(__file__), "channels.db")
+
+
+def _ensure_writable_db_path(path: str) -> str:
+    try:
+        parent = os.path.dirname(path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with sqlite3.connect(path):
+            pass
+        return path
+    except Exception:
+        fallback = os.path.join(tempfile.gettempdir(), "channels.db")
+        os.makedirs(os.path.dirname(fallback), exist_ok=True)
+        with sqlite3.connect(fallback):
+            pass
+        return fallback
+
+
+CHANNEL_DB = _ensure_writable_db_path(_resolve_channel_db_path())
+
+
+def _connect() -> sqlite3.Connection:
+    return sqlite3.connect(CHANNEL_DB)
 
 
 # ── Initialisation ─────────────────────────────────────────────────────────
 
 def init_channel_db() -> None:
-    with sqlite3.connect(CHANNEL_DB) as db:
+    with _connect() as db:
         db.execute("""
             CREATE TABLE IF NOT EXISTS user_channels (
                 user_id     TEXT NOT NULL,
@@ -50,7 +85,7 @@ def get_channel_config(user_id: str, channel: str) -> Optional[dict]:
     Returns None if the channel is not connected.
     Never reads or writes os.environ.
     """
-    with sqlite3.connect(CHANNEL_DB) as db:
+    with _connect() as db:
         row = db.execute(
             "SELECT config_json FROM user_channels "
             "WHERE user_id=? AND channel=? AND status='connected'",
@@ -60,7 +95,7 @@ def get_channel_config(user_id: str, channel: str) -> Optional[dict]:
 
 
 def save_channel_config(user_id: str, channel: str, config: dict) -> None:
-    with sqlite3.connect(CHANNEL_DB) as db:
+    with _connect() as db:
         db.execute(
             """
             INSERT INTO user_channels (user_id, channel, status, config_json, updated_at)
@@ -75,7 +110,7 @@ def save_channel_config(user_id: str, channel: str, config: dict) -> None:
 
 
 def list_user_channels(user_id: str) -> dict:
-    with sqlite3.connect(CHANNEL_DB) as db:
+    with _connect() as db:
         rows = db.execute(
             "SELECT channel, status, updated_at FROM user_channels WHERE user_id=?",
             (user_id,),
@@ -94,7 +129,7 @@ def create_resume_token(
     frontend can resume after the broker connects the channel.
     """
     token = str(uuid.uuid4())
-    with sqlite3.connect(CHANNEL_DB) as db:
+    with _connect() as db:
         db.execute(
             """
             INSERT INTO resume_tokens
@@ -121,7 +156,7 @@ def consume_resume_token(token: str) -> Optional[dict]:
     """
     from datetime import timedelta
     cutoff = (datetime.now() - timedelta(hours=24)).isoformat()
-    with sqlite3.connect(CHANNEL_DB) as db:
+    with _connect() as db:
         # Purge stale tokens (older than 24h) on every consume
         db.execute("DELETE FROM resume_tokens WHERE created_at < ?", (cutoff,))
         row = db.execute(
@@ -141,4 +176,8 @@ def consume_resume_token(token: str) -> Optional[dict]:
 
 
 # Initialise tables on import
-init_channel_db()
+try:
+    init_channel_db()
+except Exception:
+    # Keep API importable; channel-backed actions will fail at call-time if storage is unavailable.
+    pass
