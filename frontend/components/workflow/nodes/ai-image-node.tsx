@@ -3,9 +3,9 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNode } from "../base-node";
-import type { AIImageNodeData } from "@/lib/workflow-types";
+import type { AIImageWorkflowNode } from "@/lib/workflow-types";
 
-function AIImageNodeComponent({ data, selected, ...props }: NodeProps<AIImageNodeData>) {
+function AIImageNodeComponent({ data, selected, ...props }: NodeProps<AIImageWorkflowNode>) {
   return (
     <BaseNode nodeType="aiImage" data={data} selected={selected} {...props}>
       <div className="space-y-2">

@@ -3,9 +3,9 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNode } from "../base-node";
-import type { MemoryNodeData } from "@/lib/workflow-types";
+import type { MemoryWorkflowNode } from "@/lib/workflow-types";
 
-function MemoryNodeComponent({ data, selected, ...props }: NodeProps<MemoryNodeData>) {
+function MemoryNodeComponent({ data, selected, ...props }: NodeProps<MemoryWorkflowNode>) {
   return (
     <BaseNode nodeType="memory" data={data} selected={selected} {...props}>
       <div className="space-y-2">

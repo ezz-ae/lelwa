@@ -3,9 +3,9 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { BaseNode } from "../base-node";
-import type { MergeNodeData } from "@/lib/workflow-types";
+import type { MergeWorkflowNode } from "@/lib/workflow-types";
 
-function MergeNodeComponent({ data, selected, ...props }: NodeProps<MergeNodeData>) {
+function MergeNodeComponent({ data, selected, ...props }: NodeProps<MergeWorkflowNode>) {
   return (
     <BaseNode nodeType="merge" data={data} selected={selected} hasInput={false} {...props}>
       <Handle

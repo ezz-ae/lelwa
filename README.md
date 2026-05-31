@@ -17,7 +17,8 @@ Lelwa is a real estate broker console for Dubai. Drop a lead, listing, or reques
 
 | Layer | Tech |
 |---|---|
-| Frontend | Next.js 16 · React 19 · TypeScript · Tailwind CSS · shadcn/ui |
+| Console frontend | Next.js 16 · React 19 · TypeScript · Tailwind CSS · shadcn/ui |
+| Marketing frontend | Next.js 15 · React 19 · Tailwind CSS |
 | Backend | FastAPI · Python 3.10+ · Gemini 2.0 Flash |
 | Database | PostgreSQL via Neon (SQLAlchemy) |
 | Messaging | Twilio (WhatsApp + Voice) — optional |
@@ -55,6 +56,10 @@ Lelwa is a real estate broker console for Dubai. Drop a lead, listing, or reques
     │   └── widget-cards.tsx
     └── lib/
         └── lelwa-actions.ts   Action theme system (colors, icons, chips)
+└── marketing/
+    ├── app/page.tsx           Public marketing site
+    ├── lib/console-url.ts     Console URL helper for cross-app links
+    └── next.config.mjs        Redirects console routes when deployed separately
 ```
 
 ---
@@ -94,6 +99,34 @@ The frontend defaults to `http://localhost:8000` for the API. Override with:
 # frontend/.env.local
 NEXT_PUBLIC_API_BASE_URL=https://your-backend.com
 ```
+
+### 4. Marketing site
+
+```bash
+cd marketing
+npm install
+npm run dev
+# → http://localhost:3001
+```
+
+Set one of these when the marketing app is deployed separately from the console:
+
+```
+LELWA_CONSOLE_URL=https://console.your-domain.com
+NEXT_PUBLIC_CONSOLE_URL=https://console.your-domain.com
+```
+
+## Verification
+
+Run the full local verification pass from the repository root:
+
+```bash
+npm run verify
+```
+
+This compiles the backend Python modules, builds the console app, builds the marketing app, and checks production npm audit results for both frontend packages.
+
+Current known limitation: `next.config.mjs` skips TypeScript build blocking while the workflow editor and legacy marketing component types are cleaned up. Treat `npm run verify` as the deployment gate for now, and run `npx tsc --noEmit` in each app when working specifically on type cleanup.
 
 ---
 

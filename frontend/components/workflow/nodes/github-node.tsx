@@ -3,9 +3,9 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNode } from "../base-node";
-import type { GitHubNodeData } from "@/lib/workflow-types";
+import type { GitHubWorkflowNode } from "@/lib/workflow-types";
 
-function GitHubNodeComponent({ data, selected, ...props }: NodeProps<GitHubNodeData>) {
+function GitHubNodeComponent({ data, selected, ...props }: NodeProps<GitHubWorkflowNode>) {
   // Parse owner/repo from URL for display
   const parseGitHubUrl = (url: string) => {
     if (!url) return { owner: "", repo: "" };

@@ -3,9 +3,9 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNode } from "../base-node";
-import type { ConditionNodeData } from "@/lib/workflow-types";
+import type { ConditionWorkflowNode } from "@/lib/workflow-types";
 
-function ConditionNodeComponent({ data, selected, ...props }: NodeProps<ConditionNodeData>) {
+function ConditionNodeComponent({ data, selected, ...props }: NodeProps<ConditionWorkflowNode>) {
   return (
     <BaseNode
       nodeType="condition"

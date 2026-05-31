@@ -80,8 +80,20 @@ export type WorkflowNodeType =
   | "textInput"
   | "merge";
 
-// Workflow Node with typed data
+export type AITextWorkflowNode = Node<AITextNodeData, "aiText">;
+export type AIImageWorkflowNode = Node<AIImageNodeData, "aiImage">;
+export type ConditionWorkflowNode = Node<ConditionNodeData, "condition">;
+export type MemoryWorkflowNode = Node<MemoryNodeData, "memory">;
+export type GitHubWorkflowNode = Node<GitHubNodeData, "github">;
+export type OutputWorkflowNode = Node<OutputNodeData, "output">;
+export type TextInputWorkflowNode = Node<TextInputNodeData, "textInput">;
+export type MergeWorkflowNode = Node<MergeNodeData, "merge">;
+
+// Workflow Node with typed data. The editor state uses this broad type because
+// React Flow node changes operate across mixed node collections.
 export type WorkflowNode = Node<WorkflowNodeData, WorkflowNodeType>;
+
+export type WorkflowEdge = Edge;
 
 // Workflow definition
 export interface Workflow {

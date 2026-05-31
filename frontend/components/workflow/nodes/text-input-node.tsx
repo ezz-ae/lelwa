@@ -3,9 +3,9 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNode } from "../base-node";
-import type { TextInputNodeData } from "@/lib/workflow-types";
+import type { TextInputWorkflowNode } from "@/lib/workflow-types";
 
-function TextInputNodeComponent({ data, selected, ...props }: NodeProps<TextInputNodeData>) {
+function TextInputNodeComponent({ data, selected, ...props }: NodeProps<TextInputWorkflowNode>) {
   return (
     <BaseNode nodeType="textInput" data={data} selected={selected} hasInput={false} {...props}>
       <div className="space-y-2">

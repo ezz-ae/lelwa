@@ -14,8 +14,10 @@ import {
   addEdge,
   type Connection,
   type Edge,
+  type OnEdgesChange,
+  type OnNodesChange,
   type NodeTypes,
-  type Node,
+  type NodeProps,
   BackgroundVariant,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -33,14 +35,14 @@ import {
 } from "./nodes";
 
 const nodeTypes: NodeTypes = {
-  aiText: AITextNode,
-  aiImage: AIImageNode,
-  condition: ConditionNode,
-  memory: MemoryNode,
-  github: GitHubNode,
-  output: OutputNode,
-  textInput: TextInputNode,
-  merge: MergeNode,
+  aiText: AITextNode as unknown as React.ComponentType<NodeProps>,
+  aiImage: AIImageNode as unknown as React.ComponentType<NodeProps>,
+  condition: ConditionNode as unknown as React.ComponentType<NodeProps>,
+  memory: MemoryNode as unknown as React.ComponentType<NodeProps>,
+  github: GitHubNode as unknown as React.ComponentType<NodeProps>,
+  output: OutputNode as unknown as React.ComponentType<NodeProps>,
+  textInput: TextInputNode as unknown as React.ComponentType<NodeProps>,
+  merge: MergeNode as unknown as React.ComponentType<NodeProps>,
 };
 
 const defaultNodeData: Record<WorkflowNodeType, object> = {
@@ -99,8 +101,8 @@ const defaultNodeData: Record<WorkflowNodeType, object> = {
 interface WorkflowCanvasProps {
   nodes: WorkflowNode[];
   edges: Edge[];
-  onNodesChange: ReturnType<typeof useNodesState>[1];
-  onEdgesChange: ReturnType<typeof useEdgesState>[1];
+  onNodesChange: OnNodesChange<WorkflowNode>;
+  onEdgesChange: OnEdgesChange<Edge>;
   onConnect: (connection: Connection) => void;
   onNodesUpdate: (nodes: WorkflowNode[]) => void;
   onEdgesUpdate: (edges: Edge[]) => void;
@@ -118,11 +120,11 @@ export function WorkflowCanvas({
   const [mounted, setMounted] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const connectingNodeId = useRef<string | null>(null);
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   const isDark = mounted ? resolvedTheme === "dark" : true;
 
   // Update edge styles when theme changes without remounting
@@ -162,7 +164,7 @@ export function WorkflowCanvas({
         type,
         position,
         data: defaultNodeData[type] as WorkflowNode["data"],
-      };
+      } as WorkflowNode;
 
       onNodesUpdate([...nodes, newNode]);
     },

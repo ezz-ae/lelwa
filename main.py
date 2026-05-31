@@ -140,7 +140,7 @@ class ChatRequest(BaseModel):
     session_id: str
     user_id: str = "default"
     model: Optional[str] = "gemini"
-    context: Optional[Dict[str, Any]] = {}
+    context: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ToolRequest(BaseModel):
@@ -648,6 +648,10 @@ def _workflow_row_to_dict(row: dict) -> dict:
     }
 
 
+def _workflow_storage_error() -> HTTPException:
+    return HTTPException(status_code=503, detail="workflow storage unavailable")
+
+
 @app.get("/v1/workflows")
 async def list_workflows(user_id: str = "default"):
     try:
@@ -669,6 +673,8 @@ async def list_workflows(user_id: str = "default"):
 @app.post("/v1/workflows")
 async def create_workflow(req: WorkflowSaveRequest):
     workflow_id = req.id or str(uuid.uuid4())
+    if engine is None:
+        raise _workflow_storage_error()
     try:
         with engine.begin() as conn:
             row = conn.execute(
@@ -702,24 +708,31 @@ async def create_workflow(req: WorkflowSaveRequest):
             return {"workflow": _workflow_row_to_dict(dict(row._mapping))}
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise _workflow_storage_error()
 
 
 @app.get("/v1/workflows/{workflow_id}")
 async def get_workflow(workflow_id: str, user_id: str = "default"):
-    with engine.connect() as conn:
-        row = conn.execute(
-            text("""
-                SELECT id, user_id, name, description, template_id, nodes_json, edges_json, created_at, updated_at
-                FROM workflow_definitions
-                WHERE id = :id AND user_id = :user_id
-            """),
-            {"id": workflow_id, "user_id": user_id},
-        ).fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="Workflow not found")
-        return {"workflow": _workflow_row_to_dict(dict(row._mapping))}
+    if engine is None:
+        raise _workflow_storage_error()
+    try:
+        with engine.connect() as conn:
+            row = conn.execute(
+                text("""
+                    SELECT id, user_id, name, description, template_id, nodes_json, edges_json, created_at, updated_at
+                    FROM workflow_definitions
+                    WHERE id = :id AND user_id = :user_id
+                """),
+                {"id": workflow_id, "user_id": user_id},
+            ).fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Workflow not found")
+            return {"workflow": _workflow_row_to_dict(dict(row._mapping))}
+    except HTTPException:
+        raise
+    except Exception:
+        raise _workflow_storage_error()
 
 
 @app.put("/v1/workflows/{workflow_id}")
@@ -730,17 +743,24 @@ async def update_workflow(workflow_id: str, req: WorkflowSaveRequest):
 
 @app.delete("/v1/workflows/{workflow_id}")
 async def delete_workflow(workflow_id: str, user_id: str = "default"):
-    with engine.begin() as conn:
-        conn.execute(
-            text("DELETE FROM workflow_runs WHERE workflow_id = :id AND user_id = :user_id"),
-            {"id": workflow_id, "user_id": user_id},
-        )
-        result = conn.execute(
-            text("DELETE FROM workflow_definitions WHERE id = :id AND user_id = :user_id"),
-            {"id": workflow_id, "user_id": user_id},
-        )
-        if result.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Workflow not found")
+    if engine is None:
+        raise _workflow_storage_error()
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text("DELETE FROM workflow_runs WHERE workflow_id = :id AND user_id = :user_id"),
+                {"id": workflow_id, "user_id": user_id},
+            )
+            result = conn.execute(
+                text("DELETE FROM workflow_definitions WHERE id = :id AND user_id = :user_id"),
+                {"id": workflow_id, "user_id": user_id},
+            )
+            if result.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Workflow not found")
+    except HTTPException:
+        raise
+    except Exception:
+        raise _workflow_storage_error()
     return {"success": True}
 
 
@@ -868,29 +888,34 @@ def _run_proactive_scan():
     the broker to review and act on from the console.
     """
     results = []
-    with engine.connect() as conn:
-        drops = conn.execute(
-            text(
-                "SELECT name, area, final_price_from FROM entrestate_inventory "
-                "WHERE dld_price_delta_pct < -20 LIMIT 5"
-            )
-        ).fetchall()
-        for drop in drops:
-            matches = conn.execute(
+    if engine is None:
+        return results
+    try:
+        with engine.connect() as conn:
+            drops = conn.execute(
                 text(
-                    "SELECT session_id FROM investor_intent_profiles "
-                    "WHERE budget_max >= :price "
-                    "AND (preferred_areas ILIKE :area OR preferred_areas IS NULL)"
-                ),
-                {"price": drop.final_price_from, "area": f"%{drop.area}%"},
+                    "SELECT name, area, final_price_from FROM entrestate_inventory "
+                    "WHERE dld_price_delta_pct < -20 LIMIT 5"
+                )
             ).fetchall()
-            for m in matches:
-                results.append({
-                    "property": drop.name,
-                    "area": drop.area,
-                    "price": drop.final_price_from,
-                    "session_id": m.session_id,
-                })
+            for drop in drops:
+                matches = conn.execute(
+                    text(
+                        "SELECT session_id FROM investor_intent_profiles "
+                        "WHERE budget_max >= :price "
+                        "AND (preferred_areas ILIKE :area OR preferred_areas IS NULL)"
+                    ),
+                    {"price": drop.final_price_from, "area": f"%{drop.area}%"},
+                ).fetchall()
+                for m in matches:
+                    results.append({
+                        "property": drop.name,
+                        "area": drop.area,
+                        "price": drop.final_price_from,
+                        "session_id": m.session_id,
+                    })
+    except Exception:
+        return []
     return results
 
 

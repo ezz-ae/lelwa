@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { getConsoleUrl } from "@/lib/console-url"
 import { AnimatedText } from "@/components/animated-text"
 import {
   MessageCircle,
@@ -220,6 +221,7 @@ export default function LelwaMarketingPage() {
   const [dashboardTilt, setDashboardTilt] = useState(0)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const dashboardRef = useRef<HTMLDivElement>(null)
+  const consoleHref = getConsoleUrl("/studio")
 
   const dynamicWords = ["every lead", "every deal", "every listing", "every offer", "every follow-up"]
 
@@ -309,7 +311,7 @@ export default function LelwaMarketingPage() {
 
             <div className="ml-auto flex items-center gap-3">
               <a
-                href="/studio"
+                href={consoleHref}
                 className="hidden md:flex items-center gap-1.5 rounded-full bg-[#f5f5f7] text-[#0a0a0b] px-4 py-2 text-sm font-medium hover:bg-white transition-colors"
               >
                 Open console <ArrowUpRight className="h-3.5 w-3.5" />
@@ -345,7 +347,7 @@ export default function LelwaMarketingPage() {
               </button>
             ))}
             <a
-              href="/studio"
+              href={consoleHref}
               className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#f5f5f7] text-[#0a0a0b] px-6 py-3 text-base font-medium w-fit"
             >
               Open console <ArrowUpRight className="h-4 w-4" />
@@ -405,7 +407,7 @@ export default function LelwaMarketingPage() {
 
           <div className="stagger-reveal flex flex-col sm:flex-row items-center justify-center gap-3 mt-10" style={{ animationDelay: "280ms" }}>
             <a
-              href="/studio"
+              href={consoleHref}
               className="flex items-center gap-2 rounded-full bg-[#f5f5f7] text-[#0a0a0b] px-7 py-3.5 text-sm font-semibold hover:bg-white transition-colors"
             >
               Open console <ArrowUpRight className="h-4 w-4" />
@@ -816,7 +818,7 @@ export default function LelwaMarketingPage() {
                 </ul>
 
                 <a
-                  href="/studio"
+                  href={consoleHref}
                   className={`block w-full rounded-full py-3 text-center text-sm font-semibold transition-all duration-200 ${
                     pkg.recommended
                       ? "bg-[#d4a853] text-[#0a0a0b] hover:bg-[#e8c06a]"
@@ -895,7 +897,7 @@ export default function LelwaMarketingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
-              href="/studio"
+              href={consoleHref}
               className="flex items-center gap-2 rounded-full bg-[#f5f5f7] text-[#0a0a0b] px-8 py-4 text-sm font-semibold hover:bg-white transition-colors"
             >
               Open console <ArrowUpRight className="h-4 w-4" />
@@ -953,7 +955,7 @@ export default function LelwaMarketingPage() {
                 Open the console and submit your first lead in under a minute.
               </p>
               <a
-                href="/studio"
+                href={consoleHref}
                 className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-xs text-[#86868b] hover:text-[#f5f5f7] hover:border-white/20 transition-colors w-fit"
               >
                 Open console <ArrowUpRight className="h-3 w-3" />

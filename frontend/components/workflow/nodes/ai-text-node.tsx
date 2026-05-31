@@ -3,9 +3,9 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNode } from "../base-node";
-import type { AITextNodeData } from "@/lib/workflow-types";
+import type { AITextWorkflowNode } from "@/lib/workflow-types";
 
-function AITextNodeComponent({ data, selected, ...props }: NodeProps<AITextNodeData>) {
+function AITextNodeComponent({ data, selected, ...props }: NodeProps<AITextWorkflowNode>) {
   return (
     <BaseNode nodeType="aiText" data={data} selected={selected} {...props}>
       <div className="space-y-2">

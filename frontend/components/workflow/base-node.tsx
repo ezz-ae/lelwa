@@ -2,7 +2,7 @@
 
 import React from "react";
 
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Handle, Position } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import type { WorkflowNodeType, BaseNodeData } from "@/lib/workflow-types";
 import { NODE_COLORS } from "@/lib/node-styles";
@@ -30,7 +30,7 @@ const ICONS: Record<WorkflowNodeType, React.ReactNode> = {
   merge: <Merge className="w-4 h-4" />,
 };
 
-interface BaseNodeProps extends NodeProps {
+interface BaseNodeProps {
   nodeType: WorkflowNodeType;
   children: React.ReactNode;
   hasInput?: boolean;
@@ -38,6 +38,8 @@ interface BaseNodeProps extends NodeProps {
   hasTrueOutput?: boolean;
   hasFalseOutput?: boolean;
   id: string;
+  selected?: boolean;
+  data: BaseNodeData;
 }
 
 export function BaseNode({

@@ -1,15 +1,16 @@
 {
   "name": "lelwa",
   "private": true,
-  "dependencies": {
-    "next": "^16.1.6",
-    "react": "19.2.0",
-    "react-dom": "19.2.0"
-  },
   "scripts": {
     "dev": "cd frontend && node node_modules/next/dist/bin/next dev --webpack",
-    "build": "cd frontend && node node_modules/next/dist/bin/next build --webpack",
+    "dev:frontend": "cd frontend && node node_modules/next/dist/bin/next dev --webpack",
+    "dev:marketing": "cd marketing && npm run dev",
+    "build": "npm run build:frontend",
+    "build:frontend": "cd frontend && node node_modules/next/dist/bin/next build --webpack",
+    "build:marketing": "cd marketing && npm run build",
+    "build:all": "npm run build:frontend && npm run build:marketing",
     "start": "cd frontend && node node_modules/next/dist/bin/next start",
-    "lint": "cd frontend && node node_modules/eslint/bin/eslint.js . --max-warnings=9999"
+    "lint": "cd frontend && node node_modules/eslint/bin/eslint.js . --max-warnings=9999",
+    "verify": "python3 -m py_compile main.py channels.py tools.py && cd frontend && npx tsc --noEmit && cd ../marketing && npx tsc --noEmit && cd .. && npm run build:all && cd frontend && npm audit --omit=dev && cd ../marketing && npm audit --omit=dev"
   }
 }

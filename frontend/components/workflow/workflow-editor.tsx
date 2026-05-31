@@ -40,8 +40,8 @@ interface WorkflowEditorInnerProps {
 
 function WorkflowEditorInner({ initialTemplate }: WorkflowEditorInnerProps) {
   const template = initialTemplate ?? DEFAULT_TEMPLATE;
-  const [nodes, setNodes, onNodesChange] = useNodesState(cloneNodes(template.nodes));
-  const [edges, setEdges, onEdgesChange] = useEdgesState(cloneEdges(template.edges));
+  const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNode>(cloneNodes(template.nodes));
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(cloneEdges(template.edges));
   const [workflowId, setWorkflowId] = useState<string | null>(null);
   const [templateId, setTemplateId] = useState<string | null>(template.id ?? null);
   const [workflowName, setWorkflowName] = useState(template.name);
@@ -124,7 +124,7 @@ function WorkflowEditorInner({ initialTemplate }: WorkflowEditorInnerProps) {
         type: nodeType,
         position: { x: xOffset, y: 200 },
         data: defaultNodeData[nodeType] as WorkflowNode["data"],
-      };
+      } as WorkflowNode;
       setNodes((nds) => [...nds, newNode]);
       setHasChanges(true);
     },
@@ -158,7 +158,7 @@ function WorkflowEditorInner({ initialTemplate }: WorkflowEditorInnerProps) {
       );
       setSelectedNode((prev) =>
         prev && prev.id === nodeId
-          ? { ...prev, data: { ...prev.data, ...data } as WorkflowNode["data"] }
+          ? ({ ...prev, data: { ...prev.data, ...data } } as WorkflowNode)
           : prev
       );
       setHasChanges(true);
