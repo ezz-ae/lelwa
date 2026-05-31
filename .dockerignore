@@ -1,0 +1,34 @@
+# Frontend / marketing apps are deployed on Vercel, not in the backend image
+frontend
+marketing
+node_modules
+**/node_modules
+**/.next
+.vercel
+.vercel/output
+
+# Python local
+venv
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+.mypy_cache
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Local data / reference assets
+*.db
+*.log
+*.zip
+*.yaml
+*.jpeg
+*.jpg
+*.png
+.tmp
+.claude
+.git
+.DS_Store

@@ -1,0 +1,28 @@
+# Render blueprint for the Lelwa FastAPI backend.
+# Deploy: push to GitHub, then "New > Blueprint" in Render and pick this repo.
+# Set the secret env vars (sync: false) in the Render dashboard after first deploy.
+services:
+  - type: web
+    name: lelwa-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.6"
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+      - key: TWILIO_VOICE_FROM
+        sync: false

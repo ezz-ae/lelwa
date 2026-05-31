@@ -184,3 +184,36 @@ Words that never appear in the UI:
 Words that do appear:
 
 > Send · Call · Offer · Contract · Listing · Follow-up · Meeting · Ads · Review · Prepared · Confirmation required
+
+## Deployment
+
+This repo holds three deployable pieces: the **frontend** console (`frontend/`, Next.js),
+the **marketing** site (`marketing/`, Next.js), and the **backend** API (`main.py`, FastAPI).
+
+### Frontend → Vercel (no dashboard config needed)
+The root `vercel.json` tells Vercel to build only the `frontend/` Next.js app via the
+`@vercel/next` builder, so a root import deploys the console directly (validated locally
+with `vercel build`). Set these environment variables in the Vercel project:
+
+- `NEXT_PUBLIC_API_BASE_URL` — public URL of the backend API (e.g. `https://lelwa-api.onrender.com`)
+- `LELWA_API_BASE_URL` — same backend URL (used by server-side route handlers)
+
+### Backend → Render / Railway / Fly / any Docker host
+- **Render:** import the repo as a Blueprint (`render.yaml`), then set the secret env vars.
+- **Docker:** `docker build -t lelwa-api . && docker run -p 8000:8000 --env-file .env lelwa-api`
+- **Procfile hosts (Railway, etc.):** `web: uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+Backend env vars (see `.env.example`): `DATABASE_URL`, `GEMINI_API_KEY`, `OPENAI_API_KEY`,
+and the optional `TWILIO_*` values for WhatsApp/voice.
+
+### Local development
+```bash
+# Backend (http://localhost:8000)
+uvicorn main:app --reload
+
+# Frontend console (http://localhost:3000)
+npm run dev:frontend
+
+# Marketing site (http://localhost:3001)
+npm run dev:marketing
+```
