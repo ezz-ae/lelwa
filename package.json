@@ -6,7 +6,7 @@
     "dev:frontend": "cd frontend && node node_modules/next/dist/bin/next dev --webpack",
     "dev:marketing": "cd marketing && npm run dev",
     "build": "npm run build:frontend",
-    "build:frontend": "cd frontend && node node_modules/next/dist/bin/next build --webpack",
+    "build:frontend": "cd frontend && node node_modules/next/dist/bin/next build",
     "build:marketing": "cd marketing && npm run build",
     "build:all": "npm run build:frontend && npm run build:marketing",
     "start": "cd frontend && node node_modules/next/dist/bin/next start",
