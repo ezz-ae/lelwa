@@ -59,12 +59,14 @@ class ToolExecutor:
     """
     def __init__(self, engine):
         self.engine = engine
-        # Load tool definitions from the spec
+        # Load tool definitions from the spec. Degrade to an empty tool list if the
+        # spec is missing/unreadable so the backend still boots (chat falls back).
+        self.tool_definitions = []
         spec_path = os.path.join(os.path.dirname(__file__), 'entrestate_codex_spec_v1.json')
-        with open(spec_path, 'r') as f:
-            spec = json.load(f)
+        try:
+            with open(spec_path, 'r') as f:
+                spec = json.load(f)
             # Gemini expects bare function declarations with Schema using type_ enums.
-            self.tool_definitions = []
             manual_only = {"send_whatsapp", "call_investor"}
             for tool in spec["tools"]["definitions"]:
                 function = tool.get("function", {})
@@ -76,29 +78,34 @@ class ToolExecutor:
                     "description": function.get("description", ""),
                     "parameters": _schema_to_gemini(params),
                 })
+        except (OSError, ValueError, KeyError) as exc:
+            print(f"[tools] WARNING: tool spec unavailable ({exc}); continuing with no data tools.")
 
     def get_tool_definitions(self):
         return self.tool_definitions
 
     def get_openai_tool_definitions(self):
         """Returns tool definitions in OpenAI function-calling format (used by Ollama)."""
-        spec_path = os.path.join(os.path.dirname(__file__), 'entrestate_codex_spec_v1.json')
-        with open(spec_path, 'r') as f:
-            spec = json.load(f)
-        manual_only = {"send_whatsapp", "call_investor"}
         tools = []
-        for tool in spec["tools"]["definitions"]:
-            function = tool.get("function", {})
-            if function.get("name") in manual_only:
-                continue
-            tools.append({
-                "type": "function",
-                "function": {
-                    "name": function.get("name"),
-                    "description": function.get("description", ""),
-                    "parameters": function.get("parameters", {}),
-                },
-            })
+        spec_path = os.path.join(os.path.dirname(__file__), 'entrestate_codex_spec_v1.json')
+        try:
+            with open(spec_path, 'r') as f:
+                spec = json.load(f)
+            manual_only = {"send_whatsapp", "call_investor"}
+            for tool in spec["tools"]["definitions"]:
+                function = tool.get("function", {})
+                if function.get("name") in manual_only:
+                    continue
+                tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": function.get("name"),
+                        "description": function.get("description", ""),
+                        "parameters": function.get("parameters", {}),
+                    },
+                })
+        except (OSError, ValueError, KeyError) as exc:
+            print(f"[tools] WARNING: tool spec unavailable ({exc}); only browse_web exposed.")
         # Append the browser tool (defined inline, not in the JSON spec)
         tools.append({
             "type": "function",
