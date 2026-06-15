@@ -1,86 +1,75 @@
-"use client"
-
-import { motion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 
+// Entrance uses a CSS animation (not JS) so the hero is always visible —
+// no blank-until-hydration flash on slow connections.
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-amber-500/20 rounded-full blur-[120px] animate-blob mix-blend-screen" />
-        <div className="absolute top-[15%] right-[-10%] w-[42vw] h-[42vw] bg-emerald-500/20 rounded-full blur-[120px] animate-blob animation-delay-2000 mix-blend-screen" />
-        <div className="absolute bottom-[-10%] left-[20%] w-[45vw] h-[45vw] bg-sky-500/20 rounded-full blur-[120px] animate-blob animation-delay-4000 mix-blend-screen" />
+    <section className="relative flex flex-col items-center overflow-hidden px-6 pt-36 pb-14 text-center">
+      {/* Soft, blue-forward background glows (no green) */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-1/2 top-[-14%] h-[42vw] w-[62vw] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[150px]" />
+        <div className="absolute right-[-8%] top-[4%] h-[32vw] w-[32vw] rounded-full bg-sky-500/15 blur-[140px]" />
+        <div className="absolute left-[-8%] top-[8%] h-[30vw] w-[30vw] rounded-full bg-indigo-500/15 blur-[140px]" />
       </div>
 
-      <div className="container mx-auto px-6 relative z-10 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            <span className="text-xs font-medium text-white/80 uppercase tracking-wider">
-              Dubai broker console
-            </span>
+      <div className="relative z-10 mx-auto max-w-4xl">
+        {/* Centered brand mark */}
+        <div className="mb-8 flex justify-center animate-[fade-up_0.7s_ease-out_both]">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 shadow-[0_10px_44px_-8px_rgba(59,130,246,0.6)]">
+            <span className="text-2xl font-bold text-white">L</span>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          className="text-5xl md:text-7xl lg:text-9xl font-bold tracking-tighter mb-8 text-gradient"
+        <h1
+          className="mb-6 text-5xl font-bold tracking-tight text-white md:text-7xl animate-[fade-up_0.7s_ease-out_both]"
+          style={{ animationDelay: "0.1s" }}
         >
-          Every lead
-          <br />
-          fully prepared
-        </motion.h1>
+          Every lead fully prepared
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-12 leading-relaxed"
+        <p
+          className="mx-auto mb-9 max-w-2xl text-lg leading-relaxed text-white/60 md:text-xl animate-[fade-up_0.7s_ease-out_both]"
+          style={{ animationDelay: "0.2s" }}
         >
-          Drop a lead or listing. Get a reply, call plan, offer, contract, and follow-ups ready to send in minutes.
-        </motion.p>
+          Drop a lead or listing. Lelwa prepares the reply, call script, offer, contract, and follow-ups — ready to send in minutes.
+        </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+        <div
+          className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row animate-[fade-up_0.7s_ease-out_both]"
+          style={{ animationDelay: "0.3s" }}
         >
-          <Link href="/studio" className="group relative px-8 py-4 bg-white text-black rounded-full font-semibold text-lg overflow-hidden transition-all hover:scale-105">
-            <span className="relative z-10 flex items-center gap-2">
-              Open console
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
-          </Link>
           <Link
-            href="/workflow"
-            className="px-8 py-4 glass rounded-full font-semibold text-lg text-white hover:bg-white/10 transition-all hover:scale-105"
+            href="/studio"
+            className="rounded-full bg-blue-600 px-7 py-3.5 text-base font-semibold text-white transition-colors hover:bg-blue-500"
           >
-            Browse packs
+            Get started
           </Link>
-        </motion.div>
-      </div>
+          <a
+            href="mailto:hello@lelwa.ai"
+            className="rounded-full border border-white/20 px-7 py-3.5 text-base font-semibold text-white transition-colors hover:border-white/40 hover:bg-white/5"
+          >
+            Book a demo
+          </a>
+        </div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5, duration: 1 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-      >
-        <span className="text-xs text-white/40 uppercase tracking-widest">Scroll</span>
-        <div className="w-[1px] h-12 bg-gradient-to-b from-white/0 via-white/40 to-white/0" />
-      </motion.div>
+        <div
+          className="flex justify-center animate-[fade-up_0.7s_ease-out_both]"
+          style={{ animationDelay: "0.4s" }}
+        >
+          <Link
+            href="#work"
+            className="inline-flex items-center gap-3 rounded-full border border-blue-400/20 bg-blue-500/10 px-5 py-2.5 text-sm text-white/80 transition-colors hover:bg-blue-500/15"
+          >
+            <span>
+              <span className="font-semibold text-white">See how a lead becomes a deal</span> — reply, offer, and follow-up, prepared
+            </span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600">
+              <ArrowRight className="h-3.5 w-3.5 text-white" />
+            </span>
+          </Link>
+        </div>
+      </div>
     </section>
   )
 }

@@ -8,7 +8,7 @@ const packs = [
   {
     title: "Lead capture → reply",
     category: "Lead response",
-    color: "from-amber-500/20 to-emerald-500/20",
+    color: "from-sky-500/20 to-blue-500/20",
     highlights: ["Reply text ready", "Call plan drafted", "Next steps queued"],
   },
   {

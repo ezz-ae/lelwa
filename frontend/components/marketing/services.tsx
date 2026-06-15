@@ -11,7 +11,7 @@ const services = [
     description: "Prepared reply, call plan, and next steps the moment a lead lands.",
   },
   {
-    icon: <PhoneCall className="w-8 h-8 text-emerald-300" />,
+    icon: <PhoneCall className="w-8 h-8 text-sky-300" />,
     title: "Call guidance",
     description: "Call script, objection handling, and closing asks ready for every lead.",
   },
@@ -44,7 +44,7 @@ export function Services() {
             initial={{ opacity: 0, width: 0 }}
             whileInView={{ opacity: 1, width: "100px" }}
             viewport={{ once: true }}
-            className="h-1 bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full"
+            className="h-1 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full"
           />
         </div>
 

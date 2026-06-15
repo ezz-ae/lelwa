@@ -37,8 +37,9 @@ export function Navbar() {
           "glass bg-black/40",
         )}
       >
-        <Link href="/" className="text-2xl font-bold tracking-tighter relative z-50">
-          <span className="text-emerald-400">Lelwa</span> Console
+        <Link href="/" className="flex items-center gap-2 text-2xl font-bold tracking-tight relative z-50">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-sky-400 text-sm text-white">L</span>
+          <span className="text-white">Lelwa</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
@@ -52,8 +53,8 @@ export function Navbar() {
               {link.name}
             </Link>
           ))}
-          <Link href="/studio" className="rounded-full bg-emerald-400 px-5 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 transition-colors">
-            Open console
+          <Link href="/studio" className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition-colors">
+            Get started
           </Link>
         </div>
 
@@ -78,17 +79,17 @@ export function Navbar() {
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-3xl font-light text-white hover:text-emerald-300 transition-colors"
+                  className="text-3xl font-light text-white hover:text-blue-300 transition-colors"
                 >
                   {link.name}
                 </Link>
               ))}
               <Link
                 href="/studio"
-                className="mt-4 rounded-full bg-white px-8 py-3 text-lg font-semibold text-black hover:bg-white/90 transition-colors"
+                className="mt-4 rounded-full bg-blue-600 px-8 py-3 text-lg font-semibold text-white hover:bg-blue-500 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Open console
+                Get started
               </Link>
             </div>
           </motion.div>

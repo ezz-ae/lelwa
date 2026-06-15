@@ -66,7 +66,7 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-6">Let's talk</h4>
             <p className="text-white/60 mb-4">Need a quick demo?</p>
-            <a href="mailto:hello@lelwa.ai" className="text-xl font-medium hover:text-emerald-300 transition-colors">
+            <a href="mailto:hello@lelwa.ai" className="text-xl font-medium hover:text-blue-300 transition-colors">
               hello@lelwa.ai
             </a>
           </div>

@@ -1,5 +1,7 @@
+import { AskBar } from "@/components/marketing/ask-bar"
 import { Footer } from "@/components/marketing/footer"
 import { Hero } from "@/components/marketing/hero"
+import { HighlightCarousel } from "@/components/marketing/highlight-carousel"
 import { Navbar } from "@/components/marketing/navbar"
 import { ReadyWorkflows } from "@/components/marketing/ready-workflows"
 import { Services } from "@/components/marketing/services"
@@ -7,9 +9,11 @@ import { Work } from "@/components/marketing/work"
 
 export default function MarketingLanding() {
   return (
-    <main className="min-h-screen bg-black text-white selection:bg-emerald-500/30">
+    <main className="min-h-screen bg-black text-white selection:bg-blue-500/30">
       <Navbar />
       <Hero />
+      <HighlightCarousel />
+      <AskBar />
       <Services />
       <Work />
       <ReadyWorkflows />
@@ -30,7 +34,7 @@ export default function MarketingLanding() {
               href="/studio"
               className="px-8 py-5 rounded-full border border-white/30 text-lg font-semibold hover:border-white/60 transition"
             >
-              Open console
+              Get started
             </a>
           </div>
         </div>
