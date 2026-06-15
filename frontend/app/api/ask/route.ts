@@ -6,9 +6,11 @@ export const runtime = "nodejs"
 
 export async function POST(req: Request) {
   let question = ""
+  let agent: string | undefined
   try {
     const body = await req.json()
     question = String(body?.question ?? "").trim()
+    agent = body?.agent ? String(body.agent) : undefined
   } catch {
     /* ignore malformed body */
   }
@@ -17,7 +19,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const answer = await askAgent(question)
+    const answer = await askAgent(question, agent)
     return NextResponse.json({ answer })
   } catch (err) {
     return NextResponse.json({ error: agentErrorMessage(err) }, { status: 502 })
