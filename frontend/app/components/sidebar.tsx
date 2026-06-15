@@ -11,18 +11,16 @@ import {
   Folder,
   Plug,
   Plus,
-  Network,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AccountMenu } from "./account-menu"
 
 const navItems = [
-  { id: "home",    label: "Home",     href: "/?preview=1", match: "/", icon: Home         },
-  { id: "studio",  label: "Console",  href: "/studio",                  icon: MessageSquare },
-  { id: "canvas",  label: "Canvas",   href: "/canvas",                  icon: Network       },
-  { id: "sessions",label: "Sessions", href: "/sessions",                icon: Clock         },
-  { id: "projects",label: "Projects", href: "/projects",                icon: Folder        },
-  { id: "connect", label: "Connect",  href: "/connect",                 icon: Plug          },
+  { id: "overview", label: "Overview", href: "/briefing", match: "/briefing", icon: Home         },
+  { id: "studio",   label: "Console",  href: "/studio",                       icon: MessageSquare },
+  { id: "history",  label: "History",  href: "/sessions",                     icon: Clock         },
+  { id: "projects", label: "Projects", href: "/projects",                     icon: Folder        },
+  { id: "connect",  label: "Connect",  href: "/connect",                      icon: Plug          },
 ]
 
 export function Sidebar() {
@@ -34,9 +32,9 @@ export function Sidebar() {
       <aside className="flex h-screen w-[72px] shrink-0 flex-col items-center justify-between border-r border-sidebar-border bg-sidebar py-4 text-sidebar-foreground">
         <div className="flex flex-col items-center gap-4">
           <Link
-            href="/?preview=1"
+            href="/briefing"
             className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-white transition hover:bg-white/15"
-            aria-label="Go to home"
+            aria-label="Go to overview"
           >
             <Image src="/icon.svg" alt="Lelwa" width={22} height={22} className="object-contain" />
           </Link>
@@ -51,12 +49,12 @@ export function Sidebar() {
               window.location.href = "/studio"
             }}
             className="flex flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[10px] font-medium text-white/60 transition hover:bg-white/10 hover:text-white"
-            aria-label="New session"
+            aria-label="New lead"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10">
               <Plus className="h-4 w-4" />
             </div>
-            <span>New</span>
+            <span>New lead</span>
           </button>
 
           <nav className="mt-3 flex flex-col items-center gap-2">

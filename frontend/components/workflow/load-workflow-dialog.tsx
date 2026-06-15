@@ -86,7 +86,7 @@ export function LoadWorkflowDialog({ isOpen, onClose, onLoad }: LoadWorkflowDial
       
       <div className="relative bg-workflow-surface border border-workflow-border rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col transition-colors duration-200">
         <div className="flex items-center justify-between p-4 border-b border-workflow-border">
-          <h2 className="text-lg font-semibold text-workflow-text font-mono">Load Workflow</h2>
+          <h2 className="text-lg font-semibold text-workflow-text font-mono">Load pack</h2>
           <button
             type="button"
             onClick={onClose}
@@ -103,8 +103,8 @@ export function LoadWorkflowDialog({ isOpen, onClose, onLoad }: LoadWorkflowDial
             </div>
           ) : workflows.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-workflow-text-muted font-mono text-sm">No saved workflows</p>
-              <p className="text-workflow-text-subtle text-xs mt-1">Create and save a workflow to see it here</p>
+              <p className="text-workflow-text-muted font-mono text-sm">No saved packs</p>
+              <p className="text-workflow-text-subtle text-xs mt-1">Create and save a pack to see it here</p>
             </div>
           ) : (
             <div className="space-y-2">

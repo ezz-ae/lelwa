@@ -17,7 +17,7 @@ export default function MarketingLanding() {
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-5xl font-bold mb-6 text-white">Ready to pilot every conversation?</h2>
           <p className="text-lg text-white/70 max-w-2xl mx-auto mb-10">
-            Share a listing, lead, or request and we’ll send a ready workflow with the reply, call script, offer, and follow-up before you even start typing.
+            Share a listing, lead, or request and we’ll send ready work cards with the reply, call script, offer, and follow-up before you even start typing.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a
@@ -27,10 +27,10 @@ export default function MarketingLanding() {
               Book a walkthrough
             </a>
             <a
-              href="/workspace"
+              href="/studio"
               className="px-8 py-5 rounded-full border border-white/30 text-lg font-semibold hover:border-white/60 transition"
             >
-              Enter the workspace
+              Open console
             </a>
           </div>
         </div>

@@ -106,7 +106,7 @@ function formatTime(d: Date) {
 
 function toSessionTitle(text: string) {
   const cleaned = text.replace(/\s+/g, " ").trim()
-  if (!cleaned) return "Session"
+  if (!cleaned) return "New lead"
   return cleaned.length > 56 ? `${cleaned.slice(0, 56)}…` : cleaned
 }
 
@@ -280,7 +280,7 @@ function PreparedCanvas({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Prepared</p>
-          <h2 className="mt-1 text-base font-semibold text-foreground">Canvas</h2>
+          <h2 className="mt-1 text-base font-semibold text-foreground">Prepared output</h2>
         </div>
         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           Active
@@ -782,7 +782,7 @@ export default function StudioPage() {
             <div className="flex flex-col gap-1">
               <p className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground">Console</p>
               <div className="flex flex-wrap items-center gap-2 text-sm text-foreground">
-                <span className="font-semibold">Studio</span>
+                <span className="font-semibold">Console</span>
                 <span className="text-muted-foreground/60">/</span>
                 <span className="text-muted-foreground">{projectName ?? activeSessionTitle}</span>
               </div>
@@ -796,7 +796,7 @@ export default function StudioPage() {
                 className="rounded-full border-white/10 bg-white/5 text-foreground hover:bg-white/10"
                 onClick={startNewSession}
               >
-                New session
+                New lead
               </Button>
             </div>
           </div>
@@ -808,17 +808,10 @@ export default function StudioPage() {
               <div className="space-y-4 p-4">
                 <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
                   <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.24em] text-cyan-100/80">
-                    <span>Canvas + Files</span>
+                    <span>Files</span>
                     <span>{importedFiles.length}</span>
                   </div>
                   <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => router.push("/canvas")}
-                      className="flex-1 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-100 transition hover:bg-cyan-500/20"
-                    >
-                      Open Canvas
-                    </button>
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
@@ -843,7 +836,7 @@ export default function StudioPage() {
 
                 <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Sessions</p>
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">History</p>
                     <button
                       type="button"
                       onClick={() => router.push("/sessions")}
@@ -925,7 +918,7 @@ export default function StudioPage() {
 
           <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/25 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
-              <p className="text-xs font-medium text-foreground/90">Chat</p>
+              <p className="text-xs font-medium text-foreground/90">Conversation</p>
               <p className="text-[11px] text-muted-foreground">{projectName ?? activeSessionTitle}</p>
             </div>
             <div className="flex-1 px-6 py-5">
@@ -1015,16 +1008,9 @@ export default function StudioPage() {
           <aside className="hidden min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/25 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] lg:flex">
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <div>
-                <p className="text-xs font-medium text-foreground/90">Studio</p>
+                <p className="text-xs font-medium text-foreground/90">Console</p>
                 <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Prepared output</p>
               </div>
-              <button
-                type="button"
-                onClick={() => router.push("/canvas")}
-                className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-cyan-100 transition hover:bg-cyan-500/20"
-              >
-                Canvas
-              </button>
             </div>
             <div className="min-h-0 flex-1 p-4">
               <ScrollArea className="h-full pr-2">

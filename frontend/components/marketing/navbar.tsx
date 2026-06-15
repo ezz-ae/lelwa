@@ -18,9 +18,7 @@ export function Navbar() {
   const navLinks = [
     { name: "Work", href: "#work" },
     { name: "Services", href: "#services" },
-    { name: "Workspace", href: "/workspace" },
-    { name: "Workflow", href: "/workflow" },
-    { name: "Chat", href: "/chat" },
+    { name: "Packs", href: "/workflow" },
   ]
 
   return (
@@ -54,8 +52,8 @@ export function Navbar() {
               {link.name}
             </Link>
           ))}
-          <Link href="/workspace" className="rounded-full bg-emerald-400 px-5 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 transition-colors">
-            Open Workspace
+          <Link href="/studio" className="rounded-full bg-emerald-400 px-5 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-300 transition-colors">
+            Open console
           </Link>
         </div>
 
@@ -86,11 +84,11 @@ export function Navbar() {
                 </Link>
               ))}
               <Link
-                href="/workspace"
+                href="/studio"
                 className="mt-4 rounded-full bg-white px-8 py-3 text-lg font-semibold text-black hover:bg-white/90 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Launch Workspace
+                Open console
               </Link>
             </div>
           </motion.div>

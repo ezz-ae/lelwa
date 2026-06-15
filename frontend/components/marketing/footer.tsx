@@ -9,7 +9,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
           <div>
             <Link href="/" className="text-2xl font-bold tracking-tighter mb-6 block">
-              Melting the mundane with intelligence.
+              Every listing, offer, and follow-up prepared.
             </Link>
             <p className="text-white/60 leading-relaxed">
               Lelwa keeps every listing, offer, and follow-up prepared so you can respond with speed and Dubai-grade polish.
@@ -21,7 +21,7 @@ export function Footer() {
             <ul className="space-y-4 text-white/60">
               <li>
                 <Link href="#work" className="hover:text-white transition-colors">
-                  Work feed
+                  Work
                 </Link>
               </li>
               <li>
@@ -30,13 +30,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/workspace" className="hover:text-white transition-colors">
-                  Workspace
+                <Link href="/studio" className="hover:text-white transition-colors">
+                  Open console
                 </Link>
               </li>
               <li>
                 <Link href="/workflow" className="hover:text-white transition-colors">
-                  Workflow
+                  Packs
                 </Link>
               </li>
             </ul>
@@ -65,7 +65,7 @@ export function Footer() {
 
           <div>
             <h4 className="font-semibold mb-6">Let's talk</h4>
-            <p className="text-white/60 mb-4">Need a quick demo or strategic brief?</p>
+            <p className="text-white/60 mb-4">Need a quick demo?</p>
             <a href="mailto:hello@lelwa.ai" className="text-xl font-medium hover:text-emerald-300 transition-colors">
               hello@lelwa.ai
             </a>

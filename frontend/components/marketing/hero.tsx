@@ -67,7 +67,7 @@ export function Hero() {
             href="/workflow"
             className="px-8 py-4 glass rounded-full font-semibold text-lg text-white hover:bg-white/10 transition-all hover:scale-105"
           >
-            Design a flow
+            Browse packs
           </Link>
         </motion.div>
       </div>

@@ -1,7 +1,7 @@
 import type { Edge } from "@xyflow/react"
 import type { ComponentType, SVGProps } from "react"
 import type { WorkflowNode } from "./workflow-types"
-import { FileText, Bot, BookOpen, Sparkles } from "lucide-react"
+import { MessageSquare, House, FilePen, CalendarClock } from "lucide-react"
 
 export type WorkflowTemplateIcon = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -16,142 +16,18 @@ export interface WorkflowTemplate {
 
 export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
   {
-    id: "readme-generator",
-    name: "README Generator",
-    description: "Compile repository context into a polished README with sections for overview, usage, and API reference.",
-    icon: FileText,
-    nodes: [
-      {
-        id: "github-1",
-        type: "github",
-        position: { x: 50, y: 200 },
-        data: {
-          label: "GitHub Repo",
-          githubUrl: "",
-          branch: "main",
-          fetchReadme: true,
-          fetchStructure: true,
-          fetchKeyFiles: true,
-        },
-      },
-      {
-        id: "ai-1",
-        type: "aiText",
-        position: { x: 450, y: 150 },
-        data: {
-          label: "Generate README",
-          provider: "openai",
-          model: "gpt-4o",
-          prompt:
-            "Based on the following repository context, write a README.md with sections for Overview, Features, Installation, Usage, API Reference, and Contributing guidelines.\n\n{{input}}",
-          systemPrompt: "You are a technical documentation expert.",
-          temperature: 0.7,
-        },
-      },
-      {
-        id: "output-1",
-        type: "output",
-        position: { x: 900, y: 200 },
-        data: {
-          label: "README Output",
-          outputType: "readme-md",
-          customFilename: "README.md",
-          customTemplate: "",
-        },
-      },
-    ],
-    edges: [
-      { id: "e1", source: "github-1", target: "ai-1", type: "default", animated: true },
-      { id: "e2", source: "ai-1", target: "output-1", type: "default", animated: true },
-    ],
-  },
-  {
-    id: "agents-md",
-    name: "Agents.md",
-    description: "Draft agents.md documentation covering behavior, rules, and best practices for your AI assistants.",
-    icon: Bot,
-    nodes: [
-      {
-        id: "github-1",
-        type: "github",
-        position: { x: 50, y: 80 },
-        data: {
-          label: "GitHub Repo",
-          githubUrl: "",
-          branch: "main",
-          fetchReadme: true,
-          fetchStructure: true,
-          fetchKeyFiles: true,
-        },
-      },
-      {
-        id: "memory-1",
-        type: "memory",
-        position: { x: 50, y: 380 },
-        data: {
-          label: "Project Context",
-          memoryKey: "project-rules",
-          operation: "read",
-          dataType: "text",
-          defaultValue: "",
-        },
-      },
-      {
-        id: "merge-1",
-        type: "merge",
-        position: { x: 480, y: 220 },
-        data: {
-          label: "Combine Context",
-          separator: "\n\n---\n\n",
-        },
-      },
-      {
-        id: "ai-1",
-        type: "aiText",
-        position: { x: 880, y: 150 },
-        data: {
-          label: "Generate Agents.md",
-          provider: "openai",
-          model: "gpt-4o",
-          prompt:
-            "Create an agents.md file for AI coding assistants using this project context. Include overview, tech stack, conventions, and guardrails for Cursor, Claude, and Warp.",
-          systemPrompt: "You are an authority on documenting AI assistant behaviors.",
-          temperature: 0.7,
-        },
-      },
-      {
-        id: "output-1",
-        type: "output",
-        position: { x: 1350, y: 220 },
-        data: {
-          label: "Agents.md",
-          outputType: "agents-md",
-          agentType: "cursor",
-          customFilename: "agents.md",
-          customTemplate: "",
-        },
-      },
-    ],
-    edges: [
-      { id: "e1", source: "github-1", target: "merge-1", type: "default", animated: true },
-      { id: "e2", source: "memory-1", target: "merge-1", type: "default", animated: true },
-      { id: "e3", source: "merge-1", target: "ai-1", type: "default", animated: true },
-      { id: "e4", source: "ai-1", target: "output-1", type: "default", animated: true },
-    ],
-  },
-  {
-    id: "wiki-generator",
-    name: "Wiki Page",
-    description: "Transform a topic into a markdown-rich GitHub Wiki entry that matches your product narrative.",
-    icon: BookOpen,
+    id: "lead-reply",
+    name: "Lead reply",
+    description: "Turn a new lead message into a ready WhatsApp reply, a call script, and next steps.",
+    icon: MessageSquare,
     nodes: [
       {
         id: "text-1",
         type: "textInput",
         position: { x: 50, y: 200 },
         data: {
-          label: "Topic Input",
-          text: "Enter the topic or feature to document...",
+          label: "Lead details",
+          text: "Paste the lead message, budget, area, and bedrooms...",
         },
       },
       {
@@ -159,13 +35,13 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
         type: "aiText",
         position: { x: 450, y: 150 },
         data: {
-          label: "Generate Wiki",
-          provider: "openai",
-          model: "gpt-4o",
+          label: "Prepare reply",
+          provider: "google",
+          model: "gemini-2.0-flash",
           prompt:
-            "Write a GitHub Wiki page about the following topic. Use headers, code samples, and adoption guidance where relevant.\n\nTopic: {{input}}",
-          systemPrompt: "You are a technical writer crafting developer documentation.",
-          temperature: 0.7,
+            "From the lead details below, prepare three things a Dubai broker can send right away:\n1) A short WhatsApp reply that answers the lead and asks one qualifying question.\n2) A brief call script with an opener, three questions, and a close.\n3) Three concrete next steps with timing.\nKeep it plain and ready to send.\n\n{{input}}",
+          systemPrompt: "You prepare ready-to-send broker replies for Dubai real estate leads. Be concrete and concise.",
+          temperature: 0.6,
         },
       },
       {
@@ -173,9 +49,9 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
         type: "output",
         position: { x: 900, y: 200 },
         data: {
-          label: "Wiki Output",
-          outputType: "github-wiki",
-          customFilename: "Wiki-Page.md",
+          label: "Reply",
+          outputType: "custom",
+          customFilename: "lead-reply.md",
           customTemplate: "",
         },
       },
@@ -186,11 +62,141 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     ],
   },
   {
-    id: "blank",
-    name: "Blank Flow",
-    description: "Start with an empty canvas and build the automation that matches your deal or ops work.",
-    icon: Sparkles,
-    nodes: [],
-    edges: [],
+    id: "listing-launch",
+    name: "Listing launch",
+    description: "Turn listing details into a description, an ad caption, and a viewing plan.",
+    icon: House,
+    nodes: [
+      {
+        id: "text-1",
+        type: "textInput",
+        position: { x: 50, y: 200 },
+        data: {
+          label: "Listing details",
+          text: "Paste the property type, area, size, price, and key features...",
+        },
+      },
+      {
+        id: "ai-1",
+        type: "aiText",
+        position: { x: 450, y: 150 },
+        data: {
+          label: "Prepare listing",
+          provider: "google",
+          model: "gemini-2.0-flash",
+          prompt:
+            "From the listing details below, prepare three things for a Dubai broker:\n1) A polished listing description for the portals.\n2) A short ad caption with three hashtags.\n3) A viewing plan with suggested slots and what to highlight on the tour.\nKeep it accurate to the details given.\n\n{{input}}",
+          systemPrompt: "You prepare listing copy and viewing plans for Dubai real estate brokers. Stay accurate to the facts provided.",
+          temperature: 0.7,
+        },
+      },
+      {
+        id: "output-1",
+        type: "output",
+        position: { x: 900, y: 200 },
+        data: {
+          label: "Listing pack",
+          outputType: "custom",
+          customFilename: "listing-launch.md",
+          customTemplate: "",
+        },
+      },
+    ],
+    edges: [
+      { id: "e1", source: "text-1", target: "ai-1", type: "default", animated: true },
+      { id: "e2", source: "ai-1", target: "output-1", type: "default", animated: true },
+    ],
+  },
+  {
+    id: "offer-close",
+    name: "Offer & close",
+    description: "Turn a buyer's terms into an offer summary, a contract outline, and a closing call script.",
+    icon: FilePen,
+    nodes: [
+      {
+        id: "text-1",
+        type: "textInput",
+        position: { x: 50, y: 200 },
+        data: {
+          label: "Buyer terms",
+          text: "Paste the buyer's offer price, payment plan, conditions, and timeline...",
+        },
+      },
+      {
+        id: "ai-1",
+        type: "aiText",
+        position: { x: 450, y: 150 },
+        data: {
+          label: "Prepare offer",
+          provider: "google",
+          model: "gemini-2.0-flash",
+          prompt:
+            "From the buyer's terms below, prepare three things for a Dubai broker:\n1) A clear offer summary the seller can review.\n2) A contract outline listing the key clauses to confirm.\n3) A closing call script to walk the buyer through the next steps.\nMark anything that needs the parties to confirm.\n\n{{input}}",
+          systemPrompt: "You prepare offer summaries and closing scripts for Dubai real estate deals. Flag items that need confirmation; do not give legal advice.",
+          temperature: 0.5,
+        },
+      },
+      {
+        id: "output-1",
+        type: "output",
+        position: { x: 900, y: 200 },
+        data: {
+          label: "Offer pack",
+          outputType: "custom",
+          customFilename: "offer-close.md",
+          customTemplate: "",
+        },
+      },
+    ],
+    edges: [
+      { id: "e1", source: "text-1", target: "ai-1", type: "default", animated: true },
+      { id: "e2", source: "ai-1", target: "output-1", type: "default", animated: true },
+    ],
+  },
+  {
+    id: "follow-up",
+    name: "Follow-up sequence",
+    description: "Draft a sequenced set of follow-ups and meeting nudges to keep a deal moving.",
+    icon: CalendarClock,
+    nodes: [
+      {
+        id: "text-1",
+        type: "textInput",
+        position: { x: 50, y: 200 },
+        data: {
+          label: "Deal status",
+          text: "Paste where the deal stands, last contact, and what you need next...",
+        },
+      },
+      {
+        id: "ai-1",
+        type: "aiText",
+        position: { x: 450, y: 150 },
+        data: {
+          label: "Prepare follow-ups",
+          provider: "google",
+          model: "gemini-2.0-flash",
+          prompt:
+            "From the deal status below, draft a sequenced set of follow-ups for a Dubai broker:\n1) A WhatsApp follow-up for day 1, day 3, and day 7.\n2) A short meeting nudge to book a viewing or call.\n3) A note on when to stop following up.\nKeep each message short and easy to send.\n\n{{input}}",
+          systemPrompt: "You draft polite, sequenced follow-ups for Dubai real estate brokers. Keep each message short and respectful.",
+          temperature: 0.6,
+        },
+      },
+      {
+        id: "output-1",
+        type: "output",
+        position: { x: 900, y: 200 },
+        data: {
+          label: "Follow-up plan",
+          outputType: "custom",
+          customFilename: "follow-up-sequence.md",
+          customTemplate: "",
+        },
+      },
+    ],
+    edges: [
+      { id: "e1", source: "text-1", target: "ai-1", type: "default", animated: true },
+      { id: "e2", source: "ai-1", target: "output-1", type: "default", animated: true },
+    ],
   },
 ]
