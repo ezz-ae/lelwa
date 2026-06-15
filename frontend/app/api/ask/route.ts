@@ -51,7 +51,10 @@ export async function POST(req: Request) {
     const answer = extractText(res.data) ?? "The agent returned no answer."
     return NextResponse.json({ answer })
   } catch (err) {
-    const message = err instanceof Error ? err.message : "The agent request failed."
+    // Surface the upstream Vertex error verbatim so the expected input shape is obvious.
+    const e = err as { message?: string; response?: { data?: unknown } }
+    const detail = e?.response?.data ? ` — ${JSON.stringify(e.response.data)}` : ""
+    const message = (e?.message || "The agent request failed.") + detail
     return NextResponse.json({ error: message }, { status: 502 })
   }
 }
