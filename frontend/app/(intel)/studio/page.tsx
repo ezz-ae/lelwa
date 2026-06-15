@@ -625,7 +625,7 @@ export default function StudioPage() {
     })
 
     try {
-      const res = await fetch(`${apiBase}/v1/chat`, {
+      const res = await fetch(`/api/console/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: outbound, session_id: activeSessionId, user_id: "default" }),
