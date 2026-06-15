@@ -7,9 +7,9 @@ const geistSans = Geist({ subsets: ["latin"], variable: "--font-sans", display: 
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" })
 
 export const metadata: Metadata = {
-  title: "Lelwa | Broker Console",
+  title: "Dubay — The AI of Dubai real estate",
   description:
-    "Lelwa prepares replies, call scripts, offers, contracts, and follow-ups for Dubai brokers in one place.",
+    "Ask Dubay anything about Dubai's property market — projects, prices, ROI, Golden Visa. Built on Entrestate's data.",
   icons: {
     icon: [
       {

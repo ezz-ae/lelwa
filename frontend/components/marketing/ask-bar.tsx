@@ -42,8 +42,8 @@ export function AskBar() {
           <input
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            placeholder="Ask anything about Lelwa"
-            aria-label="Ask anything about Lelwa"
+            placeholder="Ask anything about Dubai real estate"
+            aria-label="Ask anything about Dubai real estate"
             className="flex-1 bg-transparent text-base text-white placeholder:text-white/40 focus:outline-none"
           />
           <button

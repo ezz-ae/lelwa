@@ -5,6 +5,7 @@ import { motion, useScroll, useMotionValueEvent } from "framer-motion"
 import { Menu, X } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { BRAND } from "@/lib/brand"
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -38,8 +39,8 @@ export function Navbar() {
         )}
       >
         <Link href="/" className="flex items-center gap-2 text-2xl font-bold tracking-tight relative z-50">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-sky-400 text-sm text-white">L</span>
-          <span className="text-white">Lelwa</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-sky-400 text-sm text-white">{BRAND.name.charAt(0)}</span>
+          <span className="text-white">{BRAND.name}</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">

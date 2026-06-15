@@ -1,4 +1,3 @@
-import { AskBar } from "@/components/marketing/ask-bar"
 import { Footer } from "@/components/marketing/footer"
 import { Hero } from "@/components/marketing/hero"
 import { HighlightCarousel } from "@/components/marketing/highlight-carousel"
@@ -13,7 +12,6 @@ export default function MarketingLanding() {
       <Navbar />
       <Hero />
       <HighlightCarousel />
-      <AskBar />
       <Services />
       <Work />
       <ReadyWorkflows />
@@ -25,7 +23,7 @@ export default function MarketingLanding() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a
-              href="mailto:hello@lelwa.ai"
+              href="mailto:hello@dubay.ai"
               className="px-8 py-5 rounded-full bg-white text-black font-semibold text-lg hover:bg-white/90 transition"
             >
               Book a walkthrough
