@@ -13,12 +13,10 @@ const STANDARD_ACTIONS = [
 export async function POST(req: Request) {
   let message = ""
   let sessionId = ""
-  let agent: string | undefined
   try {
     const body = await req.json()
     message = String(body?.message ?? "").trim()
     sessionId = String(body?.session_id ?? "")
-    agent = body?.agent ? String(body.agent) : undefined
   } catch {
     /* ignore */
   }
@@ -29,7 +27,7 @@ export async function POST(req: Request) {
   const timestamp = new Date().toISOString()
 
   try {
-    const answer = await askAgent(message, agent)
+    const answer = await askAgent(message)
     return NextResponse.json({
       reply: answer,
       prepared_blocks: [{ type: "reply", title: "Reply", content: answer }],

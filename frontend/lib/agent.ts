@@ -1,117 +1,132 @@
 import { GoogleAuth } from "google-auth-library"
 
-// ── Agent network ────────────────────────────────────────────────────────────
-// Lelwa talks to a NETWORK of Vertex AI Agent Engine agents (marketing, lead,
-// listing, offer, follow-up, voice …). Configure the network with the VERTEX_AGENTS
-// env var (JSON); adding an agent is config, not code. Falls back to the single
-// marketing agent so existing deploys keep working.
-//
-// VERTEX_AGENTS example (one line):
-//   [{"key":"marketing","label":"Marketing","role":"runs & explores ads","engineId":"2989271399492747264"},
-//    {"key":"lead","label":"Lead reply","engineId":"<id>"}]
+// Dubay's market AI. Mirrors Freehold's proven setup: Vertex AI `generateContent`
+// (Gemini 2.5) authed with a service account, so the SAME env works here 1:1.
+// Auth precedence: VERTEX_AI_API_KEY → VERTEX_AI_SERVICE_ACCOUNT_JSON → GOOGLE_SERVICE_ACCOUNT_JSON.
+// Project id is derived from the service-account JSON (env override available).
 
-export interface AgentConfig {
-  key: string
-  label: string
-  role?: string
-  project: string
-  location: string
-  engineId: string
+const DEFAULT_PROJECT = "gen-lang-client-0814069297"
+const VERTEX_LOCATION = process.env.GOOGLE_CLOUD_REGION || process.env.VERTEX_LOCATION || "us-central1"
+const MODEL = process.env.DUBAY_MODEL || "gemini-2.5-flash"
+
+const SYSTEM_PROMPT = `You are Dubay — the AI of the Dubai real-estate market.
+
+You help investors, buyers, brokers, and developers understand Dubai property:
+projects and communities, prices, ROI and rental yields, payment plans, off-plan
+launches, fees, and the Golden Visa.
+
+Style: concise, concrete, and grounded. Use AED for money. Prefer short paragraphs
+and tight bullet lists. When you lack live figures, say so plainly and explain what
+would sharpen the answer — never invent specific prices, project names, or numbers.
+You are an assistant, not a licensed advisor; for an actual transaction, suggest
+confirming with a licensed Dubai broker.`
+
+let cachedToken: string | null = null
+let tokenExpiry = 0
+let cachedProject: string | null = null
+
+function serviceAccountJson(): string | undefined {
+  return process.env.VERTEX_AI_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_SERVICE_ACCOUNT_JSON
 }
 
-const DEFAULT_PROJECT = process.env.VERTEX_PROJECT_ID || "610006155413"
-const DEFAULT_LOCATION = process.env.VERTEX_LOCATION || "us-central1"
-const INPUT_KEY = process.env.VERTEX_INPUT_KEY || "input"
+export function vertexConfigured(): boolean {
+  return Boolean(process.env.VERTEX_AI_API_KEY || serviceAccountJson())
+}
 
-function loadAgents(): AgentConfig[] {
-  const raw = process.env.VERTEX_AGENTS
-  if (raw) {
+function resolveProject(): string {
+  if (process.env.GOOGLE_CLOUD_PROJECT) return process.env.GOOGLE_CLOUD_PROJECT
+  if (process.env.VERTEX_PROJECT_ID) return process.env.VERTEX_PROJECT_ID
+  if (cachedProject) return cachedProject
+  const json = serviceAccountJson()
+  if (json) {
     try {
-      const parsed = JSON.parse(raw) as Array<Partial<AgentConfig>>
-      const agents = parsed
-        .filter((a) => a.key && a.engineId)
-        .map((a) => ({
-          key: String(a.key),
-          label: a.label || String(a.key),
-          role: a.role,
-          project: a.project || DEFAULT_PROJECT,
-          location: a.location || DEFAULT_LOCATION,
-          engineId: String(a.engineId),
-        }))
-      if (agents.length) return agents
+      const p = JSON.parse(json)?.project_id
+      if (p) {
+        cachedProject = p
+        return p
+      }
     } catch {
-      /* fall through to single-agent default */
+      /* fall through */
     }
   }
-  return [
-    {
-      key: "marketing",
-      label: "Marketing",
-      role: "Explores marketing agencies / runs ads",
-      project: DEFAULT_PROJECT,
-      location: DEFAULT_LOCATION,
-      engineId: process.env.VERTEX_REASONING_ENGINE_ID || "2989271399492747264",
-    },
-  ]
+  return DEFAULT_PROJECT
 }
 
-let cached: AgentConfig[] | null = null
-export function listAgents(): AgentConfig[] {
-  if (!cached) cached = loadAgents()
-  return cached
-}
+async function authHeaders(): Promise<Record<string, string>> {
+  const apiKey = process.env.VERTEX_AI_API_KEY
+  if (apiKey) return { "x-goog-api-key": apiKey }
 
-export function defaultAgentKey(): string {
-  const want = process.env.VERTEX_DEFAULT_AGENT
-  const agents = listAgents()
-  return (want && agents.find((a) => a.key === want)?.key) || agents[0]?.key
-}
-
-export function getAgent(key?: string): AgentConfig | null {
-  const agents = listAgents()
-  return agents.find((a) => a.key === (key || defaultAgentKey())) || agents[0] || null
-}
-
-function serviceAccountCredentials() {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
-  if (!raw) return undefined // fall back to Application Default Credentials
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return undefined
+  const json = serviceAccountJson()
+  if (!json) {
+    throw new Error("Vertex AI is not configured. Set VERTEX_AI_SERVICE_ACCOUNT_JSON (service-account JSON).")
   }
-}
-
-/** Query an agent in the network by key (default agent if omitted). Throws on failure. */
-export async function askAgent(question: string, agentKey?: string): Promise<string> {
-  const agent = getAgent(agentKey)
-  if (!agent) throw new Error("No agent configured.")
+  if (cachedToken && Date.now() < tokenExpiry) {
+    return { Authorization: `Bearer ${cachedToken}` }
+  }
   const auth = new GoogleAuth({
-    credentials: serviceAccountCredentials(),
+    credentials: JSON.parse(json),
     scopes: ["https://www.googleapis.com/auth/cloud-platform"],
   })
   const client = await auth.getClient()
-  const url = `https://${agent.location}-aiplatform.googleapis.com/v1/projects/${agent.project}/locations/${agent.location}/reasoningEngines/${agent.engineId}:query`
-  const payload = { class_method: "query", input: { [INPUT_KEY]: question } }
-  const res = await client.request<Record<string, unknown>>({ url, method: "POST", data: payload })
-  return extractText(res.data) ?? "The agent returned no answer."
+  const tokenRes = await client.getAccessToken()
+  if (!tokenRes.token) throw new Error("Failed to obtain Vertex AI access token.")
+  cachedToken = tokenRes.token
+  tokenExpiry = Date.now() + 55 * 60 * 1000
+  return { Authorization: `Bearer ${cachedToken}` }
+}
+
+export interface Turn {
+  role: "user" | "model"
+  text: string
+}
+
+/** Ask Dubay. Optional prior turns give multi-turn context. Throws on failure. */
+export async function askAgent(question: string, history: Turn[] = []): Promise<string> {
+  const headers = await authHeaders()
+  const project = resolveProject()
+  const url =
+    `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${project}` +
+    `/locations/${VERTEX_LOCATION}/publishers/google/models/${MODEL}:generateContent`
+
+  const contents = [
+    ...history.map((h) => ({ role: h.role, parts: [{ text: h.text }] })),
+    { role: "user" as const, parts: [{ text: question }] },
+  ]
+
+  const body = {
+    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents,
+    generationConfig: {
+      temperature: 0.5,
+      maxOutputTokens: 2048,
+      // 2.5 Flash "thinks" by default and can exhaust the budget → disable for direct answers.
+      thinkingConfig: { thinkingBudget: 0 },
+    },
+  }
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const err = await res.text().catch(() => `HTTP ${res.status}`)
+    throw new Error(`Vertex generateContent error (${res.status}): ${err}`)
+  }
+  const data = (await res.json()) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
+  }
+  return data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") || "No answer returned."
 }
 
 export function agentErrorMessage(err: unknown): string {
-  const e = err as { message?: string; response?: { data?: unknown } }
-  const detail = e?.response?.data ? ` — ${JSON.stringify(e.response.data)}` : ""
-  return (e?.message || "The agent request failed.") + detail
+  return err instanceof Error ? err.message : "The agent request failed."
 }
 
-function extractText(value: unknown): string | null {
-  if (value == null) return null
-  if (typeof value === "string") return value
-  if (typeof value === "object") {
-    const v = value as Record<string, unknown>
-    for (const key of ["output", "response", "text", "content", "answer", "result"]) {
-      const found = extractText(v[key])
-      if (found) return found
-    }
-  }
-  return null
+// Minimal network info for /api/agents (kept for the multi-agent UI later).
+export function listAgents() {
+  return [{ key: "dubay", label: "Dubay", role: `Dubai real-estate market AI (${MODEL})` }]
+}
+export function defaultAgentKey() {
+  return "dubay"
 }
