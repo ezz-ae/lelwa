@@ -2,13 +2,6 @@ import Link from "next/link"
 import { AskBar } from "@/components/marketing/ask-bar"
 import { BRAND } from "@/lib/brand"
 
-const SUGGESTIONS = [
-  "2BR in Dubai Marina under AED 2M — best ROI?",
-  "Which off-plan projects launch this quarter?",
-  "Do I qualify for the Golden Visa?",
-  "Fair price for a 1BR in JVC?",
-]
-
 // The market-AI front door: ask Dubay anything about Dubai real estate.
 // Entrance uses CSS animation so the hero is always visible (no hydration flash).
 export function Hero() {
@@ -44,20 +37,6 @@ export function Hero() {
 
         <div className="animate-[fade-up_0.7s_ease-out_both]" style={{ animationDelay: "0.3s" }}>
           <AskBar />
-        </div>
-
-        <div
-          className="mt-5 flex flex-wrap justify-center gap-2 animate-[fade-up_0.7s_ease-out_both]"
-          style={{ animationDelay: "0.4s" }}
-        >
-          {SUGGESTIONS.map((q) => (
-            <span
-              key={q}
-              className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs text-white/50"
-            >
-              {q}
-            </span>
-          ))}
         </div>
 
         <div
