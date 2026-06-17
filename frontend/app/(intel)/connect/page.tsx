@@ -49,11 +49,17 @@ export default function ConnectPage() {
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/20 px-6 py-4">
           <div>
             <p className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground">Channels</p>
-            <h2 className="mt-1 text-lg font-semibold text-foreground">Configure channels</h2>
+            <h2 className="mt-1 text-lg font-semibold text-foreground">Connect your channels</h2>
             <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-              Connect each channel once. Credentials are stored locally and never shared.
+              Connect WhatsApp, voice, and more once — credentials are encrypted and never shared.
             </p>
           </div>
+          <Link
+            href="/studio"
+            className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-sm text-white/70 transition-colors hover:bg-white/5"
+          >
+            ← Back to Dubay
+          </Link>
         </header>
 
         <div className="flex flex-1 flex-col gap-6 px-6 py-6">
@@ -81,7 +87,7 @@ export default function ConnectPage() {
                             variant="outline"
                             className={`py-0 text-[10px] ${
                               isConnected
-                                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                                ? "border-blue-500/30 bg-blue-500/10 text-blue-200"
                                 : isUnavailable
                                   ? "text-muted-foreground/60"
                                   : "border-white/10 text-muted-foreground"
@@ -97,8 +103,8 @@ export default function ConnectPage() {
                     </div>
 
                     {isConnected ? (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10">
-                        <Check className="h-3.5 w-3.5 text-emerald-200" />
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/10">
+                        <Check className="h-3.5 w-3.5 text-blue-200" />
                       </div>
                     ) : canConnect ? (
                       <Button
@@ -128,20 +134,20 @@ export default function ConnectPage() {
           <Card className="border border-white/10 bg-white/5">
             <CardContent className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-emerald-200">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-blue-300">
                   <CheckCircle2 className="h-5 w-5" />
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Next</p>
-                  <h3 className="text-base font-semibold text-foreground">Open console</h3>
+                  <h3 className="text-base font-semibold text-foreground">Back to Dubay</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Submit a lead. Execute reply, call, or offer from the console.
+                    Ask Dubay about the market — prepared messages send on your connected channels.
                   </p>
                 </div>
               </div>
               <Button asChild className="shrink-0 rounded-full border-white/10 bg-white/5 text-foreground hover:bg-white/10" variant="outline">
                 <Link href="/studio">
-                  Open console
+                  Open Dubay
                   <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </Button>
