@@ -16,10 +16,8 @@ export function Navbar() {
     setIsScrolled(latest > 50)
   })
 
-  const navLinks = [
-    { name: "Work", href: "#work" },
-    { name: "Services", href: "#services" },
-    { name: "Packs", href: "/workflow" },
+  const navLinks: { name: string; href: string }[] = [
+    { name: "For brokers", href: "/studio" },
   ]
 
   return (
