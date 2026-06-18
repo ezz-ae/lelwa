@@ -1,4 +1,5 @@
 import { GoogleAuth } from "google-auth-library"
+import { buildMarketContext } from "./market-context"
 
 // Dubay's market AI. Mirrors Freehold's proven setup: Vertex AI `generateContent`
 // (Gemini 2.5) authed with a service account, so the SAME env works here 1:1.
@@ -19,7 +20,11 @@ Style: concise, concrete, and grounded. Use AED for money. Prefer short paragrap
 and tight bullet lists. When you lack live figures, say so plainly and explain what
 would sharpen the answer — never invent specific prices, project names, or numbers.
 You are an assistant, not a licensed advisor; for an actual transaction, suggest
-confirming with a licensed Dubai broker.`
+confirming with a licensed Dubai broker.
+
+When a "Live Entrestate market data" block is included below, treat it as the
+source of truth and cite its figures; without it, answer from general knowledge
+and flag the numbers as indicative.`
 
 let cachedToken: string | null = null
 let tokenExpiry = 0
@@ -88,9 +93,12 @@ export async function askAgent(question: string, history: Turn[] = []): Promise<
     `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${project}` +
     `/locations/${VERTEX_LOCATION}/publishers/google/models/${MODEL}:generateContent`
 
+  const context = await buildMarketContext(question).catch(() => "")
+  const userText = context ? `${context}\n\nUser question: ${question}` : question
+
   const contents = [
     ...history.map((h) => ({ role: h.role, parts: [{ text: h.text }] })),
-    { role: "user" as const, parts: [{ text: question }] },
+    { role: "user" as const, parts: [{ text: userText }] },
   ]
 
   const body = {
