@@ -85,28 +85,21 @@ export interface Turn {
   text: string
 }
 
-/** Ask Dubay. Optional prior turns give multi-turn context. Throws on failure. */
-export async function askAgent(question: string, history: Turn[] = []): Promise<string> {
+type Content = { role: "user" | "model"; parts: { text: string }[] }
+
+async function runVertex(systemInstruction: string, contents: Content[], maxOutputTokens = 2048): Promise<string> {
   const headers = await authHeaders()
   const project = resolveProject()
   const url =
     `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${project}` +
     `/locations/${VERTEX_LOCATION}/publishers/google/models/${MODEL}:generateContent`
 
-  const context = await buildMarketContext(question).catch(() => "")
-  const userText = context ? `${context}\n\nUser question: ${question}` : question
-
-  const contents = [
-    ...history.map((h) => ({ role: h.role, parts: [{ text: h.text }] })),
-    { role: "user" as const, parts: [{ text: userText }] },
-  ]
-
   const body = {
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    systemInstruction: { parts: [{ text: systemInstruction }] },
     contents,
     generationConfig: {
       temperature: 0.5,
-      maxOutputTokens: 2048,
+      maxOutputTokens,
       // 2.5 Flash "thinks" by default and can exhaust the budget → disable for direct answers.
       thinkingConfig: { thinkingBudget: 0 },
     },
@@ -125,6 +118,45 @@ export async function askAgent(question: string, history: Turn[] = []): Promise<
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
   }
   return data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") || "No answer returned."
+}
+
+/** Ask Dubay. Optional prior turns give multi-turn context. Throws on failure. */
+export async function askAgent(question: string, history: Turn[] = []): Promise<string> {
+  const context = await buildMarketContext(question).catch(() => "")
+  const userText = context ? `${context}\n\nUser question: ${question}` : question
+  const contents: Content[] = [
+    ...history.map((h) => ({ role: h.role, parts: [{ text: h.text }] })),
+    { role: "user", parts: [{ text: userText }] },
+  ]
+  return runVertex(SYSTEM_PROMPT, contents, 2048)
+}
+
+const PLAN_PROMPT = `You are Dubay, building a concrete Dubai property PLAN for the user's goal.
+
+Output GitHub-flavored Markdown with EXACTLY these H2 sections, in this order:
+## Objective
+One line restating the goal.
+## Strategy
+2–3 sentences: risk level, horizon, and focus.
+## Where to buy
+A Markdown table with columns: Area | Why it fits | Indicative price (AED) | Net yield. List 2–4 Dubai areas/communities. Use the live data when provided; otherwise label figures "indicative".
+## Budget & financing
+Bullets: purchase range, DLD fee (~4%), agency (~2%), cash vs mortgage, expected monthly/return.
+## Timeline
+Numbered milestones from today to the goal.
+## Next steps
+3–5 concrete actions the user can take now.
+
+Rules: tight and concrete; AED for money; speak in areas/communities and ranges; never invent specific project names or exact figures; you are not a licensed advisor. End with ONE italic line offering to refine the plan.`
+
+/** Generate (or refine) a structured Dubai property plan. Returns Markdown. Throws on failure. */
+export async function generatePlan(goal: string, currentPlan?: string, refine?: string): Promise<string> {
+  const context = await buildMarketContext(`${goal} ${refine ?? ""}`).catch(() => "")
+  const prompt =
+    currentPlan && refine
+      ? `Goal: ${goal}\n\nCurrent plan:\n${currentPlan}\n\nRevise the plan so that: ${refine}\n\n${context}`
+      : `Goal: ${goal}\n\n${context}`
+  return runVertex(PLAN_PROMPT, [{ role: "user", parts: [{ text: prompt }] }], 3072)
 }
 
 export function agentErrorMessage(err: unknown): string {

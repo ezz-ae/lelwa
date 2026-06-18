@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowUp, Loader2, Plus, MessageSquare, Plug, Trash2 } from "lucide-react"
+import { ArrowUp, Loader2, Plus, MessageSquare, Plug, Trash2, Sparkles } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
@@ -160,7 +160,13 @@ export default function Console() {
             </div>
           ))}
         </nav>
-        <div className="border-t border-white/10 p-3">
+        <div className="space-y-0.5 border-t border-white/10 p-3">
+          <Link
+            href="/plan"
+            className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-white/60 transition-colors hover:bg-white/[0.04] hover:text-white"
+          >
+            <Sparkles className="h-4 w-4" /> Plan
+          </Link>
           <Link
             href="/connect"
             className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-white/60 transition-colors hover:bg-white/[0.04] hover:text-white"
