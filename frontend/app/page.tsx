@@ -1,7 +1,5 @@
-import { Audiences } from "@/components/marketing/audiences"
 import { Footer } from "@/components/marketing/footer"
 import { Hero } from "@/components/marketing/hero"
-import { Lifecycle } from "@/components/marketing/lifecycle"
 import { Navbar } from "@/components/marketing/navbar"
 
 export default function MarketingLanding() {
@@ -9,8 +7,6 @@ export default function MarketingLanding() {
     <main className="min-h-screen bg-black text-white selection:bg-blue-500/30">
       <Navbar />
       <Hero />
-      <Lifecycle />
-      <Audiences />
       <Footer />
     </main>
   )

@@ -1,6 +1,6 @@
 import { AskBar } from "@/components/marketing/ask-bar"
 
-// The front door: one line, the input, nothing else. Ask-first, instantly visible.
+// The front door speaks to the customer: one line, the input, nothing else.
 export function Hero() {
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-20 text-center">
@@ -14,16 +14,9 @@ export function Hero() {
           The AI of Dubai real estate
         </h1>
         <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-white/55">
-          Ask anything — then find, plan, finance, negotiate, and close it. The whole journey, one place.
+          Ask anything about Dubai&apos;s property market — projects, prices, ROI, the Golden Visa.
         </p>
         <AskBar />
-        <p className="mt-6 text-xs text-white/30">
-          For buyers, investors, renters — and the realtors, developers, and advertisers who serve them.
-        </p>
-      </div>
-
-      <div className="pointer-events-none absolute bottom-7 left-1/2 -translate-x-1/2 text-[11px] uppercase tracking-[0.3em] text-white/25">
-        Scroll
       </div>
     </section>
   )
