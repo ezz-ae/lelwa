@@ -20,6 +20,11 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 :root {
   --background: 0.16 0.018 256;
   --foreground: 0.95 0.012 240;

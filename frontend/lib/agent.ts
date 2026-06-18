@@ -87,7 +87,12 @@ export interface Turn {
 
 type Content = { role: "user" | "model"; parts: { text: string }[] }
 
-async function runVertex(systemInstruction: string, contents: Content[], maxOutputTokens = 2048): Promise<string> {
+async function runVertex(
+  systemInstruction: string,
+  contents: Content[],
+  maxOutputTokens = 2048,
+  genConfigExtra: Record<string, unknown> = {},
+): Promise<string> {
   const headers = await authHeaders()
   const project = resolveProject()
   const url =
@@ -102,6 +107,7 @@ async function runVertex(systemInstruction: string, contents: Content[], maxOutp
       maxOutputTokens,
       // 2.5 Flash "thinks" by default and can exhaust the budget → disable for direct answers.
       thinkingConfig: { thinkingBudget: 0 },
+      ...genConfigExtra,
     },
   }
 
