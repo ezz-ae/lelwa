@@ -11,7 +11,7 @@ const services = [
     description: "Prepared reply, call plan, and next steps the moment a lead lands.",
   },
   {
-    icon: <PhoneCall className="w-8 h-8 text-emerald-300" />,
+    icon: <PhoneCall className="w-8 h-8 text-sky-300" />,
     title: "Call guidance",
     description: "Call script, objection handling, and closing asks ready for every lead.",
   },
@@ -44,7 +44,7 @@ export function Services() {
             initial={{ opacity: 0, width: 0 }}
             whileInView={{ opacity: 1, width: "100px" }}
             viewport={{ once: true }}
-            className="h-1 bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full"
+            className="h-1 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full"
           />
         </div>
 
@@ -64,9 +64,6 @@ export function Services() {
                   </div>
                   <h3 className="text-2xl font-semibold mb-4 text-white">{service.title}</h3>
                   <p className="text-white/70 leading-relaxed">{service.description}</p>
-                </div>
-                <div className="mt-8 flex items-center gap-2 text-sm font-medium text-white/40 group-hover:text-white transition-colors">
-                  See detail <div className="w-4 h-[1px] bg-current transition-all group-hover:w-8" />
                 </div>
               </GlassCard>
             </motion.div>

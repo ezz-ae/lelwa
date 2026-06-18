@@ -4,11 +4,11 @@ import { GlassCard } from "@/components/ui/glass-card"
 import { motion } from "framer-motion"
 import { FileText, PhoneCall, Send } from "lucide-react"
 
-const flows = [
+const packs = [
   {
     title: "Lead capture → reply",
     category: "Lead response",
-    color: "from-amber-500/20 to-emerald-500/20",
+    color: "from-sky-500/20 to-blue-500/20",
     highlights: ["Reply text ready", "Call plan drafted", "Next steps queued"],
   },
   {
@@ -51,20 +51,21 @@ export function Work() {
               Replies, calls, offers, and follow-ups are ready before you open the thread.
             </motion.p>
           </div>
-          <motion.button
+          <motion.a
+            href="/studio"
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             className="px-6 py-3 rounded-full border border-white/20 hover:bg-white/10 transition-colors text-sm font-medium"
           >
-            View all flows
-          </motion.button>
+            View all packs
+          </motion.a>
         </div>
 
         <div className="space-y-20">
-          {flows.map((flow, index) => (
+          {packs.map((pack, index) => (
             <motion.div
-              key={flow.title}
+              key={pack.title}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
@@ -73,13 +74,13 @@ export function Work() {
               <GlassCard className="p-0 overflow-hidden group">
                 <div className="grid md:grid-cols-2 gap-0">
                   <div className="p-12 flex flex-col justify-center relative overflow-hidden">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${flow.color} opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
+                    <div className={`absolute inset-0 bg-gradient-to-br ${pack.color} opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
                     <div className="relative z-10">
                       <span className="text-sm font-medium text-white/50 mb-4 block uppercase tracking-wider">
-                        {flow.category}
+                        {pack.category}
                       </span>
                       <h3 className="text-4xl md:text-5xl font-bold mb-6 group-hover:translate-x-2 transition-transform duration-500">
-                        {flow.title}
+                        {pack.title}
                       </h3>
                       <p className="text-white/70 mb-8 max-w-md">
                         Every step is prepared as a concrete deliverable you can send or review.
@@ -99,7 +100,7 @@ export function Work() {
                           <span>Prepared outputs</span>
                         </div>
                         <ul className="mt-4 space-y-2 text-sm text-white/70">
-                          {flow.highlights.map((item) => (
+                          {pack.highlights.map((item) => (
                             <li key={item} className="flex items-center gap-2">
                               <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
                               {item}

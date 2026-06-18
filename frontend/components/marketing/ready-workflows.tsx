@@ -12,10 +12,10 @@ export function ReadyWorkflows() {
       <div className="container mx-auto px-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">Workflows</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white">Ready-to-launch automations</h2>
+            <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">Packs</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Ready-to-send packs</h2>
             <p className="text-white/70 max-w-2xl mt-2 text-sm md:text-base">
-              Pick a proven workflow, customize the prompts, and run a full sequence in minutes. Every step mirrors what you already do to close deals.
+              Start from a prepared pack — the reply, call script, offer, and follow-ups are drafted for you. Adjust and send.
             </p>
           </div>
           <Link
@@ -42,12 +42,6 @@ export function ReadyWorkflows() {
                     className="rounded-full border border-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-white/80 transition hover:border-white/50"
                   >
                     Load & customize
-                  </Link>
-                  <Link
-                    href="/workspace"
-                    className="rounded-full border border-white/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-white/80 transition hover:border-white/50"
-                  >
-                    Chat companion
                   </Link>
                 </div>
               </GlassCard>

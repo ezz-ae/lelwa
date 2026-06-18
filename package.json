@@ -2,8 +2,8 @@
   "name": "lelwa",
   "private": true,
   "scripts": {
-    "dev": "cd frontend && node node_modules/next/dist/bin/next dev --webpack",
-    "dev:frontend": "cd frontend && node node_modules/next/dist/bin/next dev --webpack",
+    "dev": "cd frontend && node node_modules/next/dist/bin/next dev",
+    "dev:frontend": "cd frontend && node node_modules/next/dist/bin/next dev",
     "dev:marketing": "cd marketing && npm run dev",
     "build": "npm run build:frontend",
     "build:frontend": "cd frontend && node node_modules/next/dist/bin/next build",

@@ -21,6 +21,7 @@ __pycache__
 !.env.example
 
 # Local data / reference assets
+archive
 *.db
 *.log
 *.zip

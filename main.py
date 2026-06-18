@@ -458,7 +458,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         timestamp=datetime.now(),
         intent="chat",
         params={"message": req.message},
-        ip_hash=hashlib.md5(request.client.host.encode()).hexdigest(),
+        ip_hash=hashlib.md5((request.client.host if request.client else "unknown").encode()).hexdigest(),
     )
     assessment = shield.evaluate_request(sig)
     try:

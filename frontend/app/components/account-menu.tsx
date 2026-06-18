@@ -20,7 +20,7 @@ const menuSections = [
     label: "Account",
     items: [
       { icon: User, label: "Console", href: "/studio" },
-      { icon: Clock, label: "Sessions", href: "/sessions" },
+      { icon: Clock, label: "History", href: "/sessions" },
       { icon: Folder, label: "Projects", href: "/projects" },
       { icon: Plug, label: "Connect", href: "/connect" },
     ],
@@ -28,7 +28,7 @@ const menuSections = [
   {
     label: "Support",
     items: [
-      { icon: Mail, label: "Support", href: "mailto:hello@lelwa.com" },
+      { icon: Mail, label: "Support", href: "mailto:hello@lelwa.ai" },
     ],
   },
 ]

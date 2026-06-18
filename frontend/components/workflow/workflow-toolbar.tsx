@@ -3,7 +3,6 @@
 import React from "react"
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import {
@@ -118,16 +117,11 @@ export function WorkflowToolbar({
       {/* Left: Logo and workflow name */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3">
-          <Image
-            src="/flowforge-logo.png"
-            alt="FlowForge"
-            width={28}
-            height={28}
-            loading="eager"
-            className="rounded-md"
-          />
+          <span className="flex items-center justify-center w-7 h-7 rounded-md bg-workflow-surface border border-workflow-border text-workflow-text">
+            <LayoutGrid className="w-4 h-4" />
+          </span>
           <span className="font-mono font-semibold text-workflow-text tracking-tight text-sm">
-            FlowForge
+            Lelwa
           </span>
         </div>
 
@@ -139,7 +133,7 @@ export function WorkflowToolbar({
             value={workflowName}
             onChange={(e) => onWorkflowNameChange(e.target.value)}
             className="bg-transparent border-none text-workflow-text font-mono text-sm focus:outline-none focus:ring-1 focus:ring-workflow-border rounded px-2 py-1 w-44 transition-colors duration-200"
-            placeholder="Workflow name"
+            placeholder="Pack name"
           />
           {hasChanges && (
             <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" title="Unsaved changes" />
@@ -200,18 +194,18 @@ export function WorkflowToolbar({
           <IconButton
             icon={<FilePlus2 className="w-4 h-4" />}
             onClick={onNew}
-            title="New workflow"
+            title="New pack"
           />
           <IconButton
             icon={isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             onClick={onSave}
-            title="Save workflow"
+            title="Save pack"
             disabled={isSaving}
           />
           <IconButton
             icon={<FolderOpen className="w-4 h-4" />}
             onClick={onLoad}
-            title="Load workflow"
+            title="Load pack"
           />
         </ButtonGroup>
 

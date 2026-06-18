@@ -6,6 +6,7 @@ __pycache__/
 .Python
 venv/
 .tmp/
+.mypy_cache/
 
 # Environment files
 .env
@@ -40,6 +41,9 @@ static/pdfs/
 6159698
 =
 Enterprise Decision Infrastructure Finalization (1).yaml
+
+# Archived local cruft (reference dumps, zips, old exports) — never committed
+archive/
 
 # Channel credential store — legacy (replaced by channels.db)
 channel_store.json

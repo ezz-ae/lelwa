@@ -17,7 +17,7 @@ Lelwa is a real estate broker console for Dubai. Drop a lead, listing, or reques
 
 | Layer | Tech |
 |---|---|
-| Console frontend | Next.js 16 · React 19 · TypeScript · Tailwind CSS · shadcn/ui |
+| Console frontend | Next.js 15.5 · React 19 · TypeScript · Tailwind CSS · shadcn/ui |
 | Marketing frontend | Next.js 15 · React 19 · Tailwind CSS |
 | Backend | FastAPI · Python 3.10+ · Gemini 2.0 Flash |
 | Database | PostgreSQL via Neon (SQLAlchemy) |
@@ -34,8 +34,8 @@ Lelwa is a real estate broker console for Dubai. Drop a lead, listing, or reques
 ├── tools.py                   18+ real estate tools (search, mortgage, WhatsApp, voice…)
 ├── security.py                Rate limiting and threat scoring
 ├── schema.sql                 PostgreSQL schema (tables + functions)
-├── entrestate_codex_spec_v1.json  Gemini function definitions
-├── channel_store.json         [auto-created] persisted channel credentials — never committed
+├── entrestate_codex_spec_v1.json  Entrestate codex spec — tools, scoring, routing, data model (loaded at runtime)
+├── channels.db                [auto-created] SQLite channel-credential store — gitignored, never committed
 ├── .env.example               Required environment variables
 └── frontend/
     ├── app/
@@ -141,7 +141,7 @@ Current known limitation: `next.config.mjs` skips TypeScript build blocking whil
 | `TWILIO_WHATSAPP_FROM` | ⬜ | WhatsApp sender e.g. `whatsapp:+14155238886` |
 | `TWILIO_VOICE_FROM` | ⬜ | Voice caller number e.g. `+14155238886` |
 
-Twilio credentials can be entered through the console's JIT Connect sheet — they're stored in `channel_store.json` (gitignored) and applied to the environment on startup.
+Twilio credentials can be entered through the console's JIT Connect sheet — they're stored in `channels.db` (a gitignored SQLite store, never committed) and loaded at runtime when an action is sent.
 
 ---
 
@@ -187,24 +187,62 @@ Words that do appear:
 
 ## Deployment
 
-This repo holds three deployable pieces: the **frontend** console (`frontend/`, Next.js),
-the **marketing** site (`marketing/`, Next.js), and the **backend** API (`main.py`, FastAPI).
+Three independently deployable pieces, two targets:
 
-### Frontend → Vercel (no dashboard config needed)
-The root `vercel.json` tells Vercel to build only the `frontend/` Next.js app via the
-`@vercel/next` builder, so a root import deploys the console directly (validated locally
-with `vercel build`). Set these environment variables in the Vercel project:
+| Piece | Target | How |
+|---|---|---|
+| `frontend/` console | Vercel project (Root Directory = `frontend`) | Next.js, zero-config |
+| `marketing/` site | Separate Vercel project (Root Directory = `marketing`) | Next.js, zero-config |
+| backend (`main.py`) | Render (or any Docker host) | `render.yaml` blueprint |
 
-- `NEXT_PUBLIC_API_BASE_URL` — public URL of the backend API (e.g. `https://lelwa-api.onrender.com`)
-- `LELWA_API_BASE_URL` — same backend URL (used by server-side route handlers)
+> There is **no** `vercel.json`, and there should not be one. A legacy
+> `builds`-based `vercel.json` is exactly what previously broke the deploy.
+> Both Next apps deploy zero-config from their own subdirectory.
 
-### Backend → Render / Railway / Fly / any Docker host
-- **Render:** import the repo as a Blueprint (`render.yaml`), then set the secret env vars.
-- **Docker:** `docker build -t lelwa-api . && docker run -p 8000:8000 --env-file .env lelwa-api`
-- **Procfile hosts (Railway, etc.):** `web: uvicorn main:app --host 0.0.0.0 --port $PORT`
+### Frontend console → Vercel
 
-Backend env vars (see `.env.example`): `DATABASE_URL`, `GEMINI_API_KEY`, `OPENAI_API_KEY`,
-and the optional `TWILIO_*` values for WhatsApp/voice.
+In the Vercel project's **Settings → Build & Development Settings**:
+
+- **Root Directory:** `frontend`
+- **Framework Preset:** Next.js
+- Leave **Install / Build / Output** commands **blank** (zero-config). The blank
+  install works because `frontend/.npmrc` ships `legacy-peer-deps=true`, required
+  for the React 19 + Radix peer ranges — **keep that file**.
+
+Set these for **both Production and Preview** _before_ redeploying
+(`NEXT_PUBLIC_*` is inlined at build time, so it must exist before the build):
+
+- `NEXT_PUBLIC_API_BASE_URL` — backend URL, e.g. `https://lelwa-api.onrender.com` (no trailing slash)
+- `LELWA_API_BASE_URL` — same backend URL (read by the `app/api/**` route handlers)
+
+> If the linked Vercel project shows **Framework = "fastapi"**, that is the bug —
+> set Root Directory + Framework as above. The backend does **not** run on Vercel.
+
+### Marketing site → Vercel (separate project)
+
+A second Vercel project importing the same repo, **Root Directory = `marketing`**,
+Framework Preset = Next.js. Set both (Production + Preview) to the console URL:
+
+- `NEXT_PUBLIC_CONSOLE_URL` — used by the client-side CTA link (required)
+- `LELWA_CONSOLE_URL` — used by the server-side route redirects
+
+### Backend → Render (canonical) or any Docker host
+
+- **Render (canonical):** New → Blueprint → pick this repo (`render.yaml`). It sets
+  `uvicorn main:app`, health check `/health`, Python 3.12. Fill the `sync: false`
+  secrets in the dashboard after first deploy.
+- **Docker (alt — Railway / Fly / etc.):**
+  `docker build -t lelwa-api . && docker run -p 8000:8000 --env-file .env lelwa-api`
+  (`Dockerfile` and `Procfile` both honor `$PORT`.)
+
+Backend env vars: `DATABASE_URL` and `GEMINI_API_KEY` are required for real
+functionality — the app boots and `/health` responds without them, but data and
+chat fall back to stubs. `TWILIO_*` are optional and can also be entered per-user
+via the console's JIT Connect sheet.
+
+> **Render free tier:** no persistent disk, so `channels.db` (the SQLite credential
+> store) resets on each deploy/restart — brokers re-connect channels via the JIT
+> sheet. The service also spins down when idle; the first request after wake is slow.
 
 ### Local development
 ```bash

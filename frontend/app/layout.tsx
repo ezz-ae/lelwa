@@ -1,11 +1,15 @@
 import type { Metadata } from "next"
+import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
+const geistSans = Geist({ subsets: ["latin"], variable: "--font-sans", display: "swap" })
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" })
+
 export const metadata: Metadata = {
-  title: "Lelwa | Broker Console",
+  title: "Dubay — The AI of Dubai real estate",
   description:
-    "Lelwa prepares replies, call scripts, offers, contracts, and follow-ups for Dubai brokers in one place.",
+    "Ask Dubay anything about Dubai's property market — projects, prices, ROI, Golden Visa. Built on Entrestate's data.",
   icons: {
     icon: [
       {
@@ -27,7 +31,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased">
         {children}
         <Analytics />
